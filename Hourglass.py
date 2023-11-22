@@ -3,7 +3,7 @@ from cmu_graphics import*
 from calendarScreen import*
 from tasks import*
 from habits import*
-import PIL.Image
+from PIL import Image
 
 def onAppStart(app):
     app.background = rgb(246, 248, 252)
@@ -21,40 +21,37 @@ def onAppStart(app):
 def redrawAll(app):
     drawTaskBar(app)
     if app.calendar == True:
-        drawCalendar()
+        drawCalendar(app.currentDate, getCurrentDay(app))
 
 def drawTaskBar(app):
-    drawRect(0, 0, 108, 1080, fill=rgb(25, 28, 28))
-    logo = PIL.Image.open('Images/hourglasslogo.png')
-    logo = logo.resize((54,54))
-    drawImage(CMUImage(logo), 54, 54, align='center')
-    calendar = PIL.Image.open('Images/calendar.png')
-    calendar = calendar.resize((32, 32))
-    drawRect(0, 108, 108, 108, fill=rgb(36, 42, 47), opacity = app.calendarButtonOpacity)
-    drawImage(CMUImage(calendar), 54, 162, align='center')
-    tasks = PIL.Image.open('Images/tasks.png')
-    tasks = tasks.resize((35, 35))
-    drawRect(0, 216, 108, 108, fill=rgb(36, 42, 47), opacity = app.tasksButtonOpacity)
-    drawImage(CMUImage(tasks), 54, 270, align='center')
-    habits = PIL.Image.open('Images/habits.png')
-    habits = habits.resize((32, 32))
-    drawRect(0, 324, 108, 108, fill=rgb(36, 42, 47), opacity = app.habitsButtonOpacity)
-    drawImage(CMUImage(habits), 54, 378, align='center')
+    drawRect(0, 0, 78, 78, fill=rgb(25, 28, 28))
+    logo = Image.open('Images/hourglasslogo.png')
+    drawRect(0, 78, 78, 702, fill=rgb(25, 28, 28))
+    drawImage(CMUImage(logo), 39, 39, align='center', width=35, height=35)
+    calendar = Image.open('Images/calendar.png')
+    drawRect(0, 78, 78, 78, fill=rgb(36, 42, 47), opacity = app.calendarButtonOpacity)
+    drawImage(CMUImage(calendar), 39, 117, align='center', width=23, height=23)
+    tasks = Image.open('Images/tasks.png')
+    drawRect(0, 156, 78, 78, fill=rgb(36, 42, 47), opacity = app.tasksButtonOpacity)
+    drawImage(CMUImage(tasks), 39, 195, align='center', width=23, height=23)
+    habits = Image.open('Images/habits.png')
+    drawRect(0, 234, 78, 78, fill=rgb(36, 42, 47), opacity = app.habitsButtonOpacity)
+    drawImage(CMUImage(habits), 39, 273, align='center', width=23, height=23)
 
 def onMouseMove(app, mouseX, mouseY):
     checkOnButton(app, mouseX, mouseY)
 
 def checkOnButton(app, mouseX, mouseY):
     if 0 <= mouseX <= 108:
-        if 108 < mouseY < 216:
+        if 78 < mouseY < 156:
             app.onCalendarButton = True
         else:
             app.onCalendarButton = False
-        if 216 < mouseY < 324:
+        if 156 < mouseY < 234:
             app.onTasksButton = True
         else:
             app.onTasksButton = False
-        if 324 < mouseY < 432:
+        if 234 < mouseY < 312:
             app.onHabitsButton = True
         else:
             app.onHabitsButton = False
@@ -84,16 +81,16 @@ def onMousePress(app, mouseX, mouseY):
     checkButtonPress(app, mouseX, mouseY)
 
 def checkButtonPress(app, mouseX, mouseY):
-    if 0 <= mouseX <= 108:
-        if 108 < mouseY < 216:
+    if 0 <= mouseX <= 78:
+        if 78 < mouseY < 156:
             app.calendar = True
         else:
             app.calendar = False
-        if 216 < mouseY < 324:
+        if 156 < mouseY < 234:
             app.tasks = True
         else:
             app.tasks = False
-        if 324 < mouseY < 432:
+        if 234 < mouseY < 312:
             app.habits = True
         else:
             app.habits = False
@@ -121,4 +118,4 @@ def onKeyPress(app, key):
     elif key == 'left':
         app.currentDate -= timedelta(days=1)
 
-runApp(width = 1920, height = 1080)
+runApp(width = 1366, height = 780)

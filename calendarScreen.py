@@ -1,11 +1,12 @@
 from cmu_graphics import*
 
-def drawCalendar():
-    drawLabel('Calendar', 258, 54, size=55)
-    drawRect(108, 108, 1812, 108, fill=rgb(238, 241, 247))
-    drawLine(108, 108, 1920, 108, fill=rgb(217, 217, 217))
-    drawLine(108, 216, 1920, 216, fill=rgb(217, 217, 217))
-    for i in range(247, 1920, 239):
-        drawLine(i, 108, i, 1080, fill=rgb(217, 217, 217))
-    for i in range(324, 1080, 108):
-        drawLine(222, i, 1920, i, fill=rgb(217, 217, 217))
+def drawCalendar(currentDate, currentDay):
+    drawLabel('Calendar', 170, 39, size=35)
+    drawRect(78, 156, 98, 624, fill=rgb(238, 241, 247))
+    drawRect(78, 78, 1366, 78, fill=rgb(238, 241, 247))
+    drawLine(78, 78, 1366, 78, fill=rgb(217, 217, 217))
+    drawLine(78, 156, 1366, 156, fill=rgb(217, 217, 217))
+    for y in range(234, 769, 78):
+        drawLine(158, y, 1366, y, fill=rgb(217, 217, 217))
+    for x in range(176, 1200, 170):
+        drawLine(x, 78, x, 780, fill=rgb(217, 217, 217))
