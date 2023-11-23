@@ -8,9 +8,15 @@ from PIL import Image
 def onAppStart(app):
     app.background = rgb(246, 248, 252)
     app.currentDate = date.today()
+    app.taskName = 'Task name'
+    app.startTime = '12:00pm'
+    app.endTime = '1:00pm'
     app.calendar = True
+    app.taskPopUp = False
+    app.singleEventChecked = True
     app.tasks = False
     app.habits = False
+    app.timeDelta = 0
     app.calendarButtonOpacity = 0
     app.tasksButtonOpacity = 0
     app.habitsButtonOpacity = 0
@@ -21,7 +27,15 @@ def onAppStart(app):
 def redrawAll(app):
     drawTaskBar(app)
     if app.calendar == True:
-        drawCalendar(app.currentDate, getCurrentDay(app))
+        date = app.currentDate + timedelta(days=app.timeDelta)
+        drawCalendar(app.currentDate, getDatesList(date))
+        if app.taskPopUp == True:
+            drawTaskPopUp(app.taskName)
+            drawCheckBox(app.singleEventChecked)
+            if app.singleEventChecked:
+                drawSingleEventMenu(app.startTime, app.endTime)
+            else:
+                drawMultipleEventsMenu()
 
 def drawTaskBar(app):
     drawRect(0, 0, 78, 78, fill=rgb(25, 28, 28))
@@ -42,7 +56,7 @@ def onMouseMove(app, mouseX, mouseY):
     checkOnButton(app, mouseX, mouseY)
 
 def checkOnButton(app, mouseX, mouseY):
-    if 0 <= mouseX <= 108:
+    if 0 <= mouseX <= 78:
         if 78 < mouseY < 156:
             app.onCalendarButton = True
         else:
@@ -94,28 +108,47 @@ def checkButtonPress(app, mouseX, mouseY):
             app.habits = True
         else:
             app.habits = False
+    elif 1224 < mouseX < 1352:
+        if 13 <= mouseY <= 65:
+            app.taskPopUp = True
+    elif app.taskPopUp:
+        if 1095 < mouseX < 1193:
+            if 344 < mouseY < 384:
+                print('yo!')
+                app.taskPopUp = False
+        elif 1022 <= mouseX <= 1078:
+            if 354 <= mouseY <= 374:
+                print('yo!')
+                app.taskPopUp = False
+        elif 810 <= mouseX <= 830:
+            if 95 <= mouseY <= 115:
+                app.singleEventChecked = not app.singleEventChecked
 
-def getCurrentDay(app):
-    number = app.currentDate.weekday()
-    if number == 0:
-        return 'Monday'
-    elif number == 1:
-        return 'Tuesday'
-    elif number == 2:
-        return 'Wednesday'
-    elif number == 3:
-        return 'Thursday'
-    elif number == 4:
-        return 'Friday'
-    elif number == 5:
-        return 'Saturday'
-    else:
-        return 'Sunday'
 
 def onKeyPress(app, key):
     if key == 'right':
-        app.currentDate += timedelta(days=1)
+        app.timeDelta += 7
     elif key == 'left':
-        app.currentDate -= timedelta(days=1)
+        app.timeDelta -= 7
+
+def getDatesList(date):
+    datesList = [date]
+    index = 1
+    while True:
+        tempDate = date + timedelta(days=index)
+        if tempDate.weekday() != 6:
+            datesList.append(tempDate)
+            index += 1
+        else:
+            break
+    index = 1
+    while True:
+        tempDate = date - timedelta(days=index)
+        if tempDate.weekday() != 5 and len(datesList) != 7:
+            datesList.insert(0, tempDate)
+            index += 1
+        else:
+            break
+    return datesList
 
 runApp(width = 1366, height = 780)
