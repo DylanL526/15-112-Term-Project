@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from cmu_graphics import*
 from PIL import Image
 
@@ -28,7 +29,7 @@ def drawTaskPopUp(taskName):
     drawImage(CMUImage(popUpMenu), 789, 13, width=422, height=385)
     drawLine(793, 78, 1207, 78, fill=rgb(217, 217, 217))
     drawLine(793, 333, 1207, 333, fill=rgb(217, 217, 217))
-    drawLabel(taskName, 810, 46, align='left', size=35, bold=True, fill=rgb(167, 173, 173))
+    drawLabel(taskName, 810, 46, align='left', size=35, bold=True)
     drawLabel('Cancel', 1050, 364, fill=rgb(167, 173, 173), size=17, bold=True)
     button = Image.open('Images/button.png')
     drawImage(CMUImage(button), 1095, 344, height=40, width=98)
@@ -43,8 +44,29 @@ def drawCheckBox(boxChecked):
     else:
         drawRect(810, 95, 20, 20, fill=None, border=rgb(217, 217, 217))
 
-def drawSingleEventMenu(startTime, endTime):
-    drawLabel(startTime + " to " + endTime + " on", 810, 150, align='left', size=30, bold=True)
+def drawSingleEventMenu(startTime, endTime, currentDate, buttonNum, rect1Opacity, rect2Opacity):
+    drawRect(810, 135, 130, 40, fill=rgb(238, 241, 247), opacity=rect1Opacity)
+    drawLabel(startTime, 875, 155, size=30, bold=True)
+    drawLabel('to', 960, 155, size=30, fill=rgb(167, 173, 173), bold=True)
+    drawRect(980, 135, 130, 40, fill=rgb(238, 241, 247), opacity=rect2Opacity)
+    drawLabel(endTime, 1045, 155, size=30, bold=True)
+    drawLabel('on', 1134, 159, size=30, fill=rgb(167, 173, 173), bold=True)
+    drawDateButtons(810, 195, currentDate, buttonNum)
+
+def drawDateButtons(startX, startY, currentDate, buttonNum):
+    x = startX
+    y = startY
+    for nums in range(0, 8):
+        if nums == buttonNum:
+            drawRect(x, y, 90, 50, fill=rgb(167, 173, 173), border=gradient(rgb(140, 82, 255), rgb(255, 145, 77), start='left'), borderWidth=4)
+        else:
+            drawRect(x, y, 90, 50, fill=rgb(167, 173, 173))
+        nextDate = currentDate + timedelta(days=nums)
+        drawLabel(str(nextDate.month) + '/' + str(nextDate.day), x+45, y+25, fill='white', size=15)
+        x += 95
+        if x == 1190:
+            x = startX
+            y += 55
 
 def drawMultipleEventsMenu():
     pass
