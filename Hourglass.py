@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from cmu_graphics import*
 from calendarScreen import*
 from tasks import*
@@ -8,6 +8,7 @@ from PIL import Image
 def onAppStart(app):
     app.background = rgb(246, 248, 252)
     app.currentDate = date.today()
+    app.currentTime = datetime.now()
     app.taskName = 'Task name'
     app.singleEventTasks = []
     app.splitTasks = []
@@ -16,13 +17,18 @@ def onAppStart(app):
     app.rect2TextField = False
     app.cursorTimer = 8
     app.clickedDayButton = 9
+    app.clickedDayButtons = []
+    app.dayButtonList = []
+    app.selectedDate = None
     app.startTime = '12:00pm'
     app.endTime = '12:00am'
-    app.rect1Opacity = 0
-    app.rect2Opacity = 0
+    app.deadline = '12:00pm'
+    app.duration = '30 min'
+    app.rect1Fill = rgb(255, 255, 255)
+    app.rect2Fill = rgb(255, 255, 255)
     app.calendar = True
     app.taskPopUp = False
-    app.singleEventChecked = True
+    app.singleEventChecked = False
     app.tasks = False
     app.habits = False
     app.timeDelta = 0
@@ -42,9 +48,9 @@ def redrawAll(app):
             drawTaskPopUp(app.taskName)
             drawCheckBox(app.singleEventChecked)
             if app.singleEventChecked:
-                drawSingleEventMenu(app.startTime, app.endTime, app.currentDate, app.clickedDayButton, app.rect1Opacity, app.rect2Opacity)
+                drawSingleEventMenu(app.startTime, app.endTime, app.currentDate, app.clickedDayButton, app.rect1Fill, app.rect2Fill)
             else:
-                drawMultipleEventsMenu()
+                drawMultipleEventsMenu(app.deadline, app.duration, app.currentDate, app.clickedDayButtons, rgb(238, 241, 247))
 
 def drawTaskBar(app):
     drawRect(0, 0, 78, 78, fill=rgb(25, 28, 28))
@@ -85,57 +91,27 @@ def checkOnButton(app, mouseX, mouseY):
     if app.taskPopUp and app.singleEventChecked:
         if 810 <= mouseX <= 940:
             if 135 <= mouseY <= 175:
-                app.rect1Opacity = 100
+                app.rect1Fill = rgb(238, 241, 247)
             else:
-                app.rect1Opacity = 0
+                app.rect1Fill = rgb(255, 255, 255)
         else:
-            app.rect1Opacity = 0
+            app.rect1Fill = rgb(255, 255, 255)
         if 980 <= mouseX <= 1115:
             if 135 <= mouseY <= 175:
-                app.rect2Opacity = 100
+                app.rect2Fill = rgb(238, 241, 247)
             else:
-                app.rect2Opacity = 0
+                app.rect2Fill = rgb(255, 255, 255)
         else:
-            app.rect2Opacity = 0
+            app.rect2Fill = rgb(255, 255, 255)
 
 def onStep(app):
     modifyButtonOpacity(app)
-    if app.taskNameTextField:
-        if app.cursorTimer == 8 and (app.taskName == '' or app.taskName[-1] != '|'):
-            app.taskName += '|'
-        app.cursorTimer += 1
-        if app.cursorTimer == 16:
-            app.cursorTimer = 0
-            app.taskName = app.taskName.replace('|', '')
+    checkInTextField(app)
+    checkTextFieldLegality(app)
+    if app.clickedDayButton != 9:
+        app.selectedDate = app.dayButtonList[app.clickedDayButton]
     else:
-        if 8 <= app.cursorTimer <= 15 and '|' in app.taskName:
-            app.taskName = app.taskName[:-1]
-            app.cursorTimer = 0
-    if app.singleEventChecked:
-        if app.rect1TextField:
-            app.rect1Opacity = 100
-            if app.cursorTimer == 8 and (app.startTime == '' or app.startTime[-1] != '|'):
-                app.startTime += "|"
-            app.cursorTimer += 1
-            if app.cursorTimer == 16:
-                app.cursorTimer = 0
-                app.startTime = app.startTime.replace('|', '')
-        else:
-            if app.startTime != '' and app.startTime[-1] == '|':
-                app.startTime = app.startTime[:-1]
-                app.cursorTimer = 0
-        if app.rect2TextField:
-            app.rect20Opacity = 100
-            if app.cursorTimer == 8 and (app.endTime == '' or app.endTime[-1] != '|'):
-                app.endTime += "|"
-            app.cursorTimer += 1
-            if app.cursorTimer == 16:
-                app.cursorTimer = 0
-                app.endTime = app.endTime.replace('|', '')
-        else:
-            if app.endTime != '' and app.endTime[-1] == '|':
-                app.endTime = app.endTime[:-1]
-                app.cursorTimer = 0
+        app.selectedDate = None
 
 def modifyButtonOpacity(app):
     if app.onCalendarButton and app.calendarButtonOpacity < 100:
@@ -157,55 +133,31 @@ def onMousePress(app, mouseX, mouseY):
         checkDayButtonPresses(app, mouseX, mouseY)
         checkStartEndTimePresses(app, mouseX, mouseY)
 
-def checkStartEndTimePresses(app, mouseX, mouseY):
-    if 810 <= mouseX <= 940:
-        if 135 <= mouseY <= 175:
-            app.rect1TextField = True
-        else:
-            app.rect1TextField = False
-    else:
-        app.rect1TextField = False
-    if 980 <= mouseX <= 1115:
-        if 135 <= mouseY <= 175:
-            app.rect2TextField = True
-        else:
-            app.rect2TextField = False
-    else:
-        app.rect2TextField = False
-
-def checkDayButtonPresses(app, mouseX, mouseY):
-    buttonCoords = [(810, 195), (905, 195), (1000, 195), (1095, 195), (810, 250), (905, 250), (1000, 250), (1095, 250)]
-    buttonValue = 0
-    for (x, y) in buttonCoords:
-        if x <= mouseX <= x+90:
-            if y <= mouseY <= y+50:
-                if app.clickedDayButton == buttonValue:
-                    app.clickedDayButton = 9
-                else:
-                    app.clickedDayButton = buttonValue
-        buttonValue += 1
-
 def checkButtonPress(app, mouseX, mouseY):
     if 0 <= mouseX <= 78:
         if 78 < mouseY < 156:
             app.calendar = True
-        else:
-            app.calendar = False
-        if 156 < mouseY < 234:
-            app.tasks = True
-        else:
             app.tasks = False
-        if 234 < mouseY < 312:
-            app.habits = True
-        else:
             app.habits = False
-    elif 1224 < mouseX < 1352:
+        elif 156 < mouseY < 234:
+            app.tasks = True
+            app.calendar = False
+            app.habits = False
+        elif 234 < mouseY < 312:
+            app.tasks = True
+            app.habits = False
+            app.calendar = False
+    elif 1224 < mouseX < 1352 and app.calendar == True:
         if 13 <= mouseY <= 65:
             app.taskPopUp = True
     if app.taskPopUp:
         if 1095 < mouseX < 1193:
             if 344 < mouseY < 384:
-                app.taskPopUp = False
+                if app.selectedDate != None and app.rect1Fill != rgb(255, 204, 203) and app.rect2Fill != rgb(255, 204, 203) and 'Task nam' not in app.taskName and isLegalTime(app):
+                    app.taskPopUp = False
+                elif isLegalTime(app) == False:
+                    app.rect1Fill = rgb(255, 204, 203)
+                    app.rect2Fill = rgb(255, 204, 203)
         if 1022 <= mouseX <= 1078:
             if 354 <= mouseY <= 374:
                 app.taskPopUp = False
@@ -236,7 +188,8 @@ def onKeyPress(app, key):
         app.timeDelta -= 7
     elif app.taskNameTextField:
         app.cursorTimer = 0
-        app.taskName = app.taskName[:-1] + '|'
+        app.taskName = app.taskName.replace('|', '')
+        app.taskName += '|'
         if app.taskName == 'Task nam|' or app.taskName == 'Task name|':
             app.taskName = '|'
         if key == 'space' and len(app.taskName) < 21:
@@ -247,7 +200,8 @@ def onKeyPress(app, key):
             app.taskName = app.taskName[:-1] + key + '|'
     elif app.rect1TextField:
         app.cursorTimer = 0
-        app.startTime = app.startTime[:-1] + '|'
+        app.startTime = app.startTime.replace('|', '')
+        app.startTime += '|'
         if key == 'backspace':
             app.startTime = app.startTime[:-2] + '|'
         elif len(app.startTime) < 8:
@@ -255,7 +209,8 @@ def onKeyPress(app, key):
                 app.startTime = app.startTime[:-1] + key + '|'
     elif app.rect2TextField:
         app.cursorTimer = 0
-        app.endTime = app.endTime[:-1] + '|'
+        app.endTime = app.endTime.replace('|', '')
+        app.endTime += '|'
         if key == 'backspace':
             app.endTime = app.endTime[:-2] + '|'
         elif len(app.endTime) < 8:
