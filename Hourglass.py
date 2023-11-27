@@ -9,21 +9,27 @@ def onAppStart(app):
     app.background = rgb(246, 248, 252)
     app.currentDate = date.today()
     app.currentTime = datetime.now()
+    app.index = 8
     app.taskName = 'Task name'
     app.singleEventTasks = []
     app.splitTasks = []
     app.taskNameTextField = False
     app.rect1TextField = False
     app.rect2TextField = False
+    app.deadlineTextField = False
+    app.deadlineFill = rgb(255, 255, 255)
+    app.minusOpacity = 0
+    app.plusOpacity = 0
+    app.durationTextField = False
     app.cursorTimer = 8
     app.clickedDayButton = 9
-    app.clickedDayButtons = []
     app.dayButtonList = []
     app.selectedDate = None
     app.startTime = '12:00pm'
     app.endTime = '12:00am'
     app.deadline = '12:00pm'
-    app.duration = '30 min'
+    app.durationMinutes = 15
+    app.durationHours = 0
     app.rect1Fill = rgb(255, 255, 255)
     app.rect2Fill = rgb(255, 255, 255)
     app.calendar = True
@@ -43,14 +49,14 @@ def redrawAll(app):
     drawTaskBar(app)
     if app.calendar == True:
         date = app.currentDate + timedelta(days=app.timeDelta)
-        drawCalendar(app.currentDate, getDatesList(date))
+        drawCalendar(app, app.currentDate, getDatesList(date))
         if app.taskPopUp:
             drawTaskPopUp(app.taskName)
             drawCheckBox(app.singleEventChecked)
             if app.singleEventChecked:
                 drawSingleEventMenu(app.startTime, app.endTime, app.currentDate, app.clickedDayButton, app.rect1Fill, app.rect2Fill)
             else:
-                drawMultipleEventsMenu(app.deadline, app.duration, app.currentDate, app.clickedDayButtons, rgb(238, 241, 247))
+                drawMultipleEventsMenu(app.deadline, app.durationHours, app.durationMinutes, app.currentDate, app.clickedDayButton, app.deadlineFill, app.plusOpacity, app.minusOpacity)
 
 def drawTaskBar(app):
     drawRect(0, 0, 78, 78, fill=rgb(25, 28, 28))
@@ -103,11 +109,25 @@ def checkOnButton(app, mouseX, mouseY):
                 app.rect2Fill = rgb(255, 255, 255)
         else:
             app.rect2Fill = rgb(255, 255, 255)
+    elif app.taskPopUp:
+        if 918 <= mouseX <= 1028 and 168 <= mouseY <= 202:
+            app.deadlineFill = rgb(238, 241, 247)
+        else:
+            app.deadlineFill = rgb(255, 255, 255)
+        if 926 <= mouseX <= 950 and 130 <= mouseY <= 154:
+            app.minusOpacity = 100
+        else:
+            app.minusOpacity = 0
+        if 1053 <= mouseX <= 1073 and 132 <= mouseY <= 152:
+            app.plusOpacity = 100
+        else:
+            app.plusOpacity = 0
 
 def onStep(app):
     modifyButtonOpacity(app)
     checkInTextField(app)
     checkTextFieldLegality(app)
+    checkDeadlineLegality(app)
     if app.clickedDayButton != 9:
         app.selectedDate = app.dayButtonList[app.clickedDayButton]
     else:
@@ -130,8 +150,29 @@ def modifyButtonOpacity(app):
 def onMousePress(app, mouseX, mouseY):
     checkButtonPress(app, mouseX, mouseY)
     if app.taskPopUp and app.singleEventChecked:
-        checkDayButtonPresses(app, mouseX, mouseY)
+        checkDayButtonPresses(app, mouseX, mouseY, [(810, 195), (905, 195), (1000, 195), (1095, 195), (810, 250), (905, 250), (1000, 250), (1095, 250)])
         checkStartEndTimePresses(app, mouseX, mouseY)
+    elif app.taskPopUp:
+        checkDeadlinePress(app, mouseX, mouseY)
+        checkDurationPress(app, mouseX, mouseY)
+        checkPlusMinusButtons(app, mouseX, mouseY)
+        checkDayButtonPresses(app, mouseX, mouseY, [(810, 211), (905, 211), (1000, 211), (1095, 211), (810, 266), (905, 266), (1000, 266), (1095, 266)])
+
+def checkPlusMinusButtons(app, mouseX, mouseY):
+    if 926 <= mouseX <= 950 and 130 <= mouseY <= 154:
+        if app.durationMinutes == 0:
+            app.durationHours -= 1
+            app.durationMinutes = 45
+        elif app.durationHours == 0 and app.durationMinutes == 15:
+            return
+        else:
+            app.durationMinutes -= 15
+    if 1053 <= mouseX <= 1073 and 132 <= mouseY <= 152:
+        if app.durationMinutes + 15 != 60:
+            app.durationMinutes += 15
+        else:
+            app.durationHours += 1
+            app.durationMinutes = 0
 
 def checkButtonPress(app, mouseX, mouseY):
     if 0 <= mouseX <= 78:
@@ -150,10 +191,20 @@ def checkButtonPress(app, mouseX, mouseY):
     elif 1224 < mouseX < 1352 and app.calendar == True:
         if 13 <= mouseY <= 65:
             app.taskPopUp = True
-    if app.taskPopUp:
+    if app.taskPopUp and app.singleEventChecked:
+        if 810 <= mouseX <= 1190:
+            if 32 <= mouseY <= 60:
+                app.cursorTimer = 8
+                app.taskNameTextField = True
+            else:
+                app.taskNameTextField = False
+                app.taskName = app.taskName.replace('|', '')
+        else:
+            app.taskNameTextField = False
+            app.taskName = app.taskName.replace('|', '')
         if 1095 < mouseX < 1193:
             if 344 < mouseY < 384:
-                if app.selectedDate != None and app.rect1Fill != rgb(255, 204, 203) and app.rect2Fill != rgb(255, 204, 203) and 'Task nam' not in app.taskName and isLegalTime(app):
+                if app.selectedDate != None and app.rect1Fill != rgb(255, 204, 203) and app.rect2Fill != rgb(255, 204, 203) and 'Task name' not in app.taskName and isLegalTime(app):
                     app.taskPopUp = False
                 elif isLegalTime(app) == False:
                     app.rect1Fill = rgb(255, 204, 203)
@@ -170,6 +221,7 @@ def checkButtonPress(app, mouseX, mouseY):
         if 810 <= mouseX <= 830:
             if 95 <= mouseY <= 115:
                 app.singleEventChecked = not app.singleEventChecked
+    elif app.taskPopUp:
         if 810 <= mouseX <= 1190:
             if 32 <= mouseY <= 60:
                 app.cursorTimer = 8
@@ -180,12 +232,33 @@ def checkButtonPress(app, mouseX, mouseY):
         else:
             app.taskNameTextField = False
             app.taskName = app.taskName.replace('|', '')
+        if 1095 < mouseX < 1193: # Schedule Button
+            if 344 < mouseY < 384:
+                if app.selectedDate != None and app.deadlineFill != rgb(255, 204, 203) and 'Task name' not in app.taskName and isLegalDeadline(app):
+                    app.taskPopUp = False
+        if 1022 <= mouseX <= 1078: # Cancel button
+            if 354 <= mouseY <= 374:
+                app.taskPopUp = False
+        if 810 <= mouseX <= 830:
+            if 95 <= mouseY <= 115:
+                app.singleEventChecked = not app.singleEventChecked
+        if 918 <= mouseX <= 1028 and 168 <= mouseY <= 202:
+            app.cursorTimer = 8
+            app.deadlineTextField = True
+        else:
+            app.deadlineTextField = False
+            app.deadline = app.deadline.replace('|', '')
 
 def onKeyPress(app, key):
-    if key == 'right':
-        app.timeDelta += 7
-    elif key == 'left':
-        app.timeDelta -= 7
+    if app.taskPopUp == False:
+        if key == 'right':
+            app.timeDelta += 7
+        elif key == 'left':
+            app.timeDelta -= 7
+        elif key == 'up' and app.index > 0:
+            app.index -= 1
+        elif key == 'down' and app.index < 16:
+            app.index += 1
     elif app.taskNameTextField:
         app.cursorTimer = 0
         app.taskName = app.taskName.replace('|', '')
@@ -216,6 +289,15 @@ def onKeyPress(app, key):
         elif len(app.endTime) < 8:
             if key.isdigit() or key == ':' or key == 'p' or key == 'a' or key == 'm':
                 app.endTime = app.endTime[:-1] + key + '|'
+    elif app.deadlineTextField:
+        app.cursorTimer = 0
+        app.deadline = app.deadline.replace('|', '')
+        app.deadline += '|'
+        if key == 'backspace':
+            app.deadline = app.deadline[:-2] + '|'
+        elif len(app.deadline) < 8:
+            if key.isdigit() or key == ':' or key == 'p' or key == 'a' or key == 'm':
+                app.deadline = app.deadline[:-1] + key + '|'
 
 def getDatesList(date):
     datesList = [date]

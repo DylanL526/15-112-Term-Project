@@ -2,7 +2,7 @@ from datetime import date, timedelta, datetime
 from cmu_graphics import*
 from PIL import Image
 
-def drawCalendar(currentDate, dateList):
+def drawCalendar(app, currentDate, dateList):
     drawLabel(getCurrentMonth(dateList[0].month) + " " + str(dateList[0].year), 98, 39, size=35, align='left')
     drawRect(78, 156, 98, 624, fill=rgb(238, 241, 247))
     drawRect(78, 78, 1366, 78, fill=rgb(238, 241, 247))
@@ -23,6 +23,14 @@ def drawCalendar(currentDate, dateList):
     drawImage(CMUImage(button), 1224, 13, height=52, width=128)
     drawLabel('New Task', 1298, 39, size=19, align='center')
     drawLabel('+', 1243, 41, size=28)
+    drawTimes(app)
+
+def drawTimes(app):
+    times = ['1 AM', '2 AM', '3 AM', '4 AM', '5 AM', '6 AM', '7 AM', '8 AM', '9 AM', '10 AM',
+             '11 AM', '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM', '6 PM', '7 PM', '8 PM',
+             '9 PM', '10 PM', '11 PM']
+    for i in range(0+app.index, app.index+7):
+        drawLabel(times[i], 130, 234 + (i-app.index)*78, size=12, fill=rgb(92, 92, 93))
 
 def drawTaskPopUp(taskName):
     popUpMenu = Image.open('Images/popupmenu.png')
@@ -53,10 +61,9 @@ def drawSingleEventMenu(startTime, endTime, currentDate, buttonNum, rect1Fill, r
     drawLabel('on', 1134, 159, size=30, fill=rgb(167, 173, 173), bold=True)
     drawDateButtons(810, 195, currentDate, buttonNum)
 
-def checkDayButtonPresses(app, mouseX, mouseY):
-    buttonCoords = [(810, 195), (905, 195), (1000, 195), (1095, 195), (810, 250), (905, 250), (1000, 250), (1095, 250)]
+def checkDayButtonPresses(app, mouseX, mouseY, coords):
     buttonValue = 0
-    for (x, y) in buttonCoords:
+    for (x, y) in coords:
         if x <= mouseX <= x+90:
             if y <= mouseY <= y+50:
                 if app.clickedDayButton == buttonValue:
@@ -99,17 +106,36 @@ def checkTextFieldLegality(app):
     except ValueError:
         app.rect2Fill = rgb(255, 204, 203)
 
+def checkDeadlineLegality(app):
+    if '|' in app.deadline:
+        timeFormat = '%I:%M%p|'
+    else:
+        timeFormat = '%I:%M%p'
+    try:
+        currentTime = datetime.strptime(app.deadline, timeFormat)
+    except ValueError:
+        app.deadlineFill = rgb(255, 204, 203)
+
 def isLegalTime(app):
     startTime = app.startTime.replace('|', '')
     endTime = app.endTime.replace('|', '')
-    startTime = datetime.strptime(startTime[:-2], '%I:%M')
-    endTime = datetime.strptime(endTime[:-2],'%I:%M')
+    startTime = datetime.strptime(startTime, '%I:%M%p')
+    endTime = datetime.strptime(endTime,'%I:%M%p')
     if app.selectedDate == app.currentDate:
         if startTime.time() >= app.currentTime.time() and endTime.time() > app.currentTime.time():
             return True
         return False
     else:
         return startTime.time() < endTime.time()
+    
+def isLegalDeadline(app):
+    if app.selectedDate == app.currentDate:
+        time = app.deadline.replace('|', '')
+        deadlineTime = datetime.strptime(time, '%I:%M%p')
+        if (deadlineTime-timedelta(hours=app.durationHours, minutes=app.durationMinutes)).time() <= app.currentTime.time():
+            app.deadlineFill = rgb(255, 204, 203)
+            return False
+    return True
 
 def checkInTextField(app):
     if app.taskNameTextField:
@@ -148,48 +174,69 @@ def checkInTextField(app):
             if app.endTime != '' and app.endTime[-1] == '|':
                 app.cursorTimer = 0
                 app.endTime = app.endTime[:-1]
+    else:
+        if app.deadlineTextField:
+            app.deadlineFill = rgb(238, 241, 247)
+            if app.cursorTimer == 8 and (app.deadline == '' or app.deadline[-1] != '|'):
+                app.deadline += '|'
+            app.cursorTimer += 1
+            if app.cursorTimer == 16:
+                app.cursorTimer = 0
+                app.deadline = app.deadline.replace('|', '')
+        else:
+            if app.deadline != '' and app.deadline[-1] == '|':
+                app.cursorTimer = 0
+                app.deadline = app.deadline[:-1]
 
 def drawDateButtons(startX, startY, currentDate, buttonNum):
     x = startX
     y = startY
-    if type(buttonNum) == int:
-        for nums in range(0, 8):
-            if nums == buttonNum:
-                drawRect(x, y, 90, 50, fill=rgb(167, 173, 173), border=gradient(rgb(140, 82, 255), rgb(255, 145, 77), start='left'), borderWidth=4)
-            else:
-                drawRect(x, y, 90, 50, fill=rgb(167, 173, 173))
-            nextDate = currentDate + timedelta(days=nums)
-            if nextDate not in app.dayButtonList:
-                app.dayButtonList.append(nextDate)
-            drawLabel(str(nextDate.month) + '/' + str(nextDate.day), x+45, y+25, fill='white', size=15)
-            x += 95
-            if x == 1190:
-                x = startX
-                y += 55
-    else:
-        for nums in range(0, 8):
-            if nums in buttonNum:
-                drawRect(x, y, 90, 50, fill=rgb(167, 173, 173), border=gradient(rgb(140, 82, 255), rgb(255, 145, 77), start='left'), borderWidth=4)
-            else:
-                drawRect(x, y, 90, 50, fill=rgb(167, 173, 173))
-            nextDate = currentDate + timedelta(days=nums)
-            if nextDate not in app.dayButtonList:
-                app.dayButtonList.append(nextDate)
-            drawLabel(str(nextDate.month) + '/' + str(nextDate.day), x+45, y+25, fill='white', size=15)
-            x += 95
-            if x == 1190:
-                x = startX
-                y += 55
+    for nums in range(0, 8):
+        if nums == buttonNum:
+            drawRect(x, y, 90, 50, fill=rgb(167, 173, 173), border=gradient(rgb(140, 82, 255), rgb(255, 145, 77), start='left'), borderWidth=4)
+        else:
+            drawRect(x, y, 90, 50, fill=rgb(167, 173, 173))
+        nextDate = currentDate + timedelta(days=nums)
+        if nextDate not in app.dayButtonList:
+            app.dayButtonList.append(nextDate)
+        drawLabel(str(nextDate.month) + '/' + str(nextDate.day), x+45, y+25, fill='white', size=15)
+        x += 95
+        if x == 1190:
+            x = startX
+            y += 55
 
-def drawMultipleEventsMenu(deadline, duration, currentDate, buttonNums, deadlineFill):
+def drawMultipleEventsMenu(deadline, hours, minutes, currentDate, buttonNum, deadlineFill, plusOpacity, minusOpacity):
     drawLabel('Duration', 810, 142, fill=rgb(167, 173, 173), size=25, align='left', bold=True)
-    drawRect(993, 142, 150, 30, fill=None, border=rgb(217, 217, 217), align='center')
-    drawLabel(duration, 993, 142, align='center', size=17)
-    drawDateButtons(810, 211, currentDate, buttonNums)
+    drawRect(1000, 142, 163, 30, fill=None, border=rgb(217, 217, 217), align='center')
+    plus = Image.open('Images/add.png')
+    drawCircle(1063, 142, 12, align='center', fill=rgb(238, 241, 247), opacity = plusOpacity)
+    drawImage(CMUImage(plus), 1063, 142, height=20, width=20, align='center')
+    minus = Image.open('Images/subtraction.png')
+    drawCircle(938, 142, 12, align='center', fill=rgb(238, 241, 247), opacity=minusOpacity)
+    drawImage(CMUImage(minus), 938, 142, height=24, width=24, align='center')
+    if hours == 0:
+        drawLabel(f'{minutes} min', 1000, 142, align='center', size=17)
+    elif minutes == 0:
+        drawLabel(f'{hours} hrs', 1000, 142, align='center', size=17)
+    else:
+        drawLabel(f'{hours} hrs {minutes} min', 1000, 142, align='center', size=17)
+    drawDateButtons(810, 211, currentDate, buttonNum)
     drawLabel('Deadline', 810, 185, fill=rgb(167, 173, 173), size=25, align='left', bold=True)
     drawRect(973, 185, 110, 35, align='center', fill=deadlineFill)
     drawLabel(deadline, 973, 185, align='center', size=25, bold=True)
     drawLabel('on', 1035, 188, align='left', fill=rgb(167, 173, 173), size=25, bold=True)
+
+def checkDeadlinePress(app, mouseX, mouseY):
+    if 918 <= mouseX <= 1028 and 168 <= mouseY <= 202:
+        app.deadlineTextField = True
+    else:
+        app.deadlineTextField = False
+
+def checkDurationPress(app, mouseX, mouseY):
+    if 918 <= mouseX <= 1068 and 127 <= mouseY <= 157:
+        app.durationTextField = True
+    else:
+        app.durationTextField = False
 
 def getCurrentDay(number):
     if number == 0:
