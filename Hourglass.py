@@ -60,16 +60,16 @@ def redrawAll(app):
 
 def drawTaskBar(app):
     drawRect(0, 0, 78, 78, fill=rgb(25, 28, 28))
-    logo = Image.open('Images/hourglasslogo.png')
+    logo = Image.open('Images/hourglasslogo.png') # Icon taken from https://www.facebook.com/subtleclassics/
     drawRect(0, 78, 78, 702, fill=rgb(25, 28, 28))
     drawImage(CMUImage(logo), 39, 39, align='center', width=35, height=35)
-    calendar = Image.open('Images/calendar.png')
+    calendar = Image.open('Images/calendar.png') # Icon taken from https://www.flaticon.com/free-icon/calendar_3239948?term=calendar&page=1&position=13&origin=search&related_id=3239948
     drawRect(0, 78, 78, 78, fill=rgb(36, 42, 47), opacity = app.calendarButtonOpacity)
     drawImage(CMUImage(calendar), 39, 117, align='center', width=23, height=23)
-    tasks = Image.open('Images/tasks.png')
+    tasks = Image.open('Images/tasks.png') # Icon taken from https://www.flaticon.com/free-icon/clipboard_839860?term=clipboard&page=1&position=2&origin=search&related_id=839860
     drawRect(0, 156, 78, 78, fill=rgb(36, 42, 47), opacity = app.tasksButtonOpacity)
     drawImage(CMUImage(tasks), 39, 195, align='center', width=23, height=23)
-    habits = Image.open('Images/habits.png')
+    habits = Image.open('Images/habits.png') # Icon taken from https://www.flaticon.com/free-icon/refresh_10899351?term=habits&page=1&position=29&origin=search&related_id=10899351
     drawRect(0, 234, 78, 78, fill=rgb(36, 42, 47), opacity = app.habitsButtonOpacity)
     drawImage(CMUImage(habits), 39, 273, align='center', width=23, height=23)
 
