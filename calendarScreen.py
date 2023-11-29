@@ -1,6 +1,7 @@
 from datetime import date, timedelta, datetime
 from cmu_graphics import*
 from PIL import Image
+from habits import*
 
 def drawCalendar(app, currentDate, dateList):
     drawLabel(getCurrentMonth(dateList[0].month) + " " + str(dateList[0].year), 98, 39, size=35, align='left', font='DM Sans 36pt')
@@ -16,21 +17,46 @@ def drawCalendar(app, currentDate, dateList):
     for dates in dateList:
         x += 170
         if dates == currentDate:
-            drawLabel(getCurrentDay(dates.weekday()) + " " + str(dates.day), x, 117, fill=rgb(25, 25, 25), size=27, font='DM Sans')
+            drawLabel(getCurrentDay(dates.weekday())[:3] + " " + str(dates.day), x, 117, fill=rgb(25, 25, 25), size=27, font='DM Sans')
         else:
-            drawLabel(getCurrentDay(dates.weekday()) + " " + str(dates.day), x, 117, fill=rgb(92, 92, 93), size=27, font='DM Sans 36pt')
+            drawLabel(getCurrentDay(dates.weekday())[:3] + " " + str(dates.day), x, 117, fill=rgb(92, 92, 93), size=27, font='DM Sans 36pt')
     button = Image.open('Images/button.png') # Icon is element from https://www.canva.com/
     drawImage(CMUImage(button), 1224, 13, height=52, width=128)
     drawLabel('New Task', 1298, 39, size=19, align='center', font='DM Sans 36pt')
     drawLabel('+', 1243, 41, size=28, font='DM Sans 36pt')
     drawTimes(app)
+    drawCalendarEvents(app)
+
+def getDatesList(date):
+    datesList = [date]
+    index = 1
+    while True:
+        tempDate = date + timedelta(days=index)
+        if tempDate.weekday() != 6:
+            datesList.append(tempDate)
+            index += 1
+        else:
+            break
+    index = 1
+    while True:
+        tempDate = date - timedelta(days=index)
+        if tempDate.weekday() != 5 and len(datesList) != 7:
+            datesList.insert(0, tempDate)
+            index += 1
+        else:
+            break
+    return datesList
 
 def drawTimes(app):
-    times = ['1 AM', '2 AM', '3 AM', '4 AM', '5 AM', '6 AM', '7 AM', '8 AM', '9 AM', '10 AM',
-             '11 AM', '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM', '6 PM', '7 PM', '8 PM',
-             '9 PM', '10 PM', '11 PM']
     for i in range(0+app.index, app.index+7):
-        drawLabel(times[i], 130, 234 + (i-app.index)*78, size=12, fill=rgb(92, 92, 93), font='DM Sans 36pt')
+        drawLabel(app.times[i], 130, 234 + (i-app.index)*78, size=12, fill=rgb(92, 92, 93), font='DM Sans 36pt')
+
+def getShownTimes(app):
+    timeFormat = '%I %p'
+    app.shownTimes = []
+    for i in range(-1+app.index, app.index+8):
+        currentTime = datetime.strptime(app.times[i], timeFormat)
+        app.shownTimes.append(currentTime)
 
 def drawTaskPopUp(taskName):
     popUpMenu = Image.open('Images/popupmenu.png') # Image is shape from https://docs.google.com/presentation/u/1/
@@ -109,22 +135,46 @@ def checkTextFieldLegality(app):
     except ValueError:
         app.rect2Fill = rgb(255, 204, 203)
     ##############################################################################################
+    if '|' in app.habitStartTime:
+        timeFormat = '%I:%M%p|'
+    else:
+        timeFormat = '%I:%M%p'
+    ##### Code from https://stackoverflow.com/questions/33076617/how-to-validate-time-format #####
+    try:
+        currentTime = datetime.strptime(app.habitStartTime, timeFormat)
+    except ValueError:
+        app.rect3Fill = rgb(255, 204, 203)
+    ##############################################################################################
+    if '|' in app.habitEndTime:
+        timeFormat = '%I:%M%p|'
+    else:
+        timeFormat = '%I:%M%p'
+    ##### Code from https://stackoverflow.com/questions/33076617/how-to-validate-time-format #####
+    try:
+        currentTime = datetime.strptime(app.habitEndTime, timeFormat)
+    except ValueError:
+        app.rect4Fill = rgb(255, 204, 203)
+    ##############################################################################################
 
 def checkDeadlineLegality(app):
     if '|' in app.deadline:
         timeFormat = '%I:%M%p|'
     else:
         timeFormat = '%I:%M%p'
+    ##### Code from https://stackoverflow.com/questions/33076617/how-to-validate-time-format #####
     try:
         currentTime = datetime.strptime(app.deadline, timeFormat)
     except ValueError:
         app.deadlineFill = rgb(255, 204, 203)
+    ##############################################################################################
 
 def isLegalTime(app):
     startTime = app.startTime.replace('|', '')
     endTime = app.endTime.replace('|', '')
+    ### strptime from https://www.programiz.com/python-programming/datetime/strptime ###
     startTime = datetime.strptime(startTime, '%I:%M%p')
     endTime = datetime.strptime(endTime,'%I:%M%p')
+    ####################################################################################
     if app.selectedDate == app.currentDate:
         if startTime.time() >= app.currentTime.time() and endTime.time() > app.currentTime.time():
             return True
@@ -135,7 +185,9 @@ def isLegalTime(app):
 def isLegalDeadline(app):
     if app.selectedDate == app.currentDate:
         time = app.deadline.replace('|', '')
+        ### strptime from https://www.programiz.com/python-programming/datetime/strptime ###
         deadlineTime = datetime.strptime(time, '%I:%M%p')
+        ####################################################################################
         if (deadlineTime-timedelta(hours=app.durationHours, minutes=app.durationMinutes)).time() <= app.currentTime.time():
             app.deadlineFill = rgb(255, 204, 203)
             return False
@@ -152,6 +204,41 @@ def checkInTextField(app):
     else:
         if 8 <= app.cursorTimer <= 15 and '|' in app.taskName:
             app.taskName = app.taskName[:-1]
+            app.cursorTimer = 0
+    if app.habitsNameTextField:
+        if app.cursorTimer == 8 and (app.habitName == '' or app.habitName[-1] != '|'):
+            app.habitName += '|'
+        app.cursorTimer += 1
+        if app.cursorTimer == 16:
+            app.cursorTimer = 0
+            app.habitName = app.habitName.replace('|', '')
+    else:
+        if 8 <= app.cursorTimer <= 15 and '|' in app.habitName:
+            app.habitName = app.habitName[:-1]
+            app.cursorTimer = 0
+    if app.rect3TextField:
+        app.rect3Fill = rgb(238, 241, 247)
+        if app.cursorTimer == 8 and (app.habitStartTime == '' or app.habitStartTime[-1] != '|'):
+            app.habitStartTime += "|"
+        app.cursorTimer += 1
+        if app.cursorTimer == 16:
+            app.cursorTimer = 0
+            app.habitStartTime = app.habitStartTime.replace('|', '')
+    else:
+        if app.habitStartTime != '' and app.habitStartTime[-1] == '|':
+            app.habitStartTime = app.habitStartTime[:-1]
+            app.cursorTimer = 0
+    if app.rect4TextField:
+        app.rect4Fill = rgb(238, 241, 247)
+        if app.cursorTimer == 8 and (app.habitEndTime == '' or app.habitEndTime[-1] != '|'):
+            app.habitEndTime += "|"
+        app.cursorTimer += 1
+        if app.cursorTimer == 16:
+            app.cursorTimer = 0
+            app.habitEndTime = app.habitEndTime.replace('|', '')
+    else:
+        if app.habitEndTime != '' and app.habitEndTime[-1] == '|':
+            app.habitEndTime = app.habitEndTime[:-1]
             app.cursorTimer = 0
     if app.singleEventChecked:
         if app.rect1TextField:
@@ -244,19 +331,19 @@ def checkDurationPress(app, mouseX, mouseY):
 
 def getCurrentDay(number):
     if number == 0:
-        return 'Mon'
+        return 'Monday'
     elif number == 1:
-        return 'Tue'
+        return 'Tuesday'
     elif number == 2:
-        return 'Wed'
+        return 'Wednesday'
     elif number == 3:
-        return 'Thu'
+        return 'Thursday'
     elif number == 4:
-        return 'Fri'
+        return 'Friday'
     elif number == 5:
-        return 'Sat'
+        return 'Saturday'
     else:
-        return 'Sun'
+        return 'Sunday'
     
 def getCurrentMonth(number):
     if number == 1:
@@ -283,3 +370,57 @@ def getCurrentMonth(number):
         return 'November'
     else:
         return 'December'
+    
+def generateWeeklyEvents(app):
+    for dates in app.weeklyDateList:
+        app.weeklyEvents[dates] = []
+        for habits in app.habitsList:
+            if getCurrentDay(dates.weekday()) in habits.days:
+                app.weeklyEvents[dates].append(habits)
+
+def drawCalendarEvents(app):
+    xCoord = 176
+    for dates in app.weeklyEvents:
+        for event in app.weeklyEvents[dates]:
+            startY = 0
+            endY = 0
+            yCoord = 156
+            if type(isinstance(event, Habit)):
+                for i in range(len(app.shownTimes)-1):
+                    if app.shownTimes[i].time() < event.startTime.time() < app.shownTimes[i+1].time() and startY == 0:
+                        startY = yCoord + (event.startTime.minute/60)*78
+                    elif app.shownTimes[i].time() == event.startTime.time() and startY == 0:
+                        startY = yCoord
+                    elif app.shownTimes[i+1].time() == event.startTime.time() and startY == 0:
+                        startY = yCoord+78
+                    if app.shownTimes[i].time() < event.endTime.time() < app.shownTimes[i+1].time() and endY == 0:
+                        endY = yCoord + (event.endTime.minute/60)*78
+                    elif app.shownTimes[i].time() == event.endTime.time() and endY == 0:
+                        endY = yCoord
+                    elif app.shownTimes[i+1].time() == event.endTime.time() and endY == 0:
+                        endY = yCoord+78
+                    if startY != 0 and endY != 0:
+                        break
+                    yCoord += 78
+                if startY != 0 and endY == 0 and startY != 780:
+                    drawRect(xCoord, startY, 170, 780-startY)
+                elif startY == 0 and endY != 0:
+                    drawRect(xCoord, 156, 170, endY-156)
+                elif startY != 0 and endY != 0:
+                    drawRect(xCoord, startY, 170, endY-startY)
+        xCoord += 170
+    
+class SingleEvent:
+
+    def __init__(self, startTime, endTime, date, name):
+        self.startTime = startTime
+        self.endTime = endTime
+        self.date = date
+        self.name = name
+
+class SplitEvent:
+
+    def __init__(self, deadline, date, name):
+        self.deadline = deadline
+        self.date = date
+        self.name = name
