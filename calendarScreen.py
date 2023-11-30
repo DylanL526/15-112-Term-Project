@@ -58,6 +58,33 @@ def getShownTimes(app):
         currentTime = datetime.strptime(app.times[i], timeFormat)
         app.shownTimes.append(currentTime)
 
+def getFormattedTimes(app, currDay):
+    timeFormat = '%I:%M%p'
+    formattedTimes = []
+    timesList = ['7:00am', '7:15am', '7:30am', '7:45am', 
+                 '8:00am', '8:15am', '8:30am', '8:45am', 
+                 '9:00am', '9:15am', '9:30am', '9:45am',
+                 '10:00am', '10:15am', '10:30am', '10:45am',
+                 '11:00am', '11:15am', '11:30am', '11:45am',
+                 '12:00pm', '12:15pm', '12:30pm', '12:45pm',
+                 '1:00pm', '1:15pm', '1:30pm', '1:45pm',
+                 '2:00pm', '2:15pm', '2:30pm', '2:45pm',
+                 '3:00pm', '3:15pm', '3:30pm', '3:45pm',
+                 '4:00pm', '4:15pm', '4:30pm', '4:45pm',
+                 '5:00pm', '5:15pm', '5:30pm', '5:45pm',
+                 '6:00pm', '6:15pm', '6:30pm', '6:45pm',
+                 '7:00pm', '7:15pm', '7:30pm', '7:45pm',
+                 '8:00pm', '8:15pm', '8:30pm', '8:45pm',
+                 '9:00pm', '9:15pm', '9:30pm', '9:45pm',
+                 '10:00pm']
+    for times in timesList:
+        currentTime = datetime.strptime(times, timeFormat)
+        ### Code from https://www.geeksforgeeks.org/replace-function-of-datetime-date-class-in-python/ ###
+        currentTime = currentTime.replace(day=currDay.day, month=currDay.month, year=currDay.year)
+        ##################################################################################################
+        formattedTimes.append(currentTime)
+    return formattedTimes
+
 def drawTaskPopUp(taskName):
     popUpMenu = Image.open('Images/popupmenu.png') # Image is shape from https://docs.google.com/presentation/u/1/
     drawImage(CMUImage(popUpMenu), 789, 13, width=422, height=385)
@@ -311,7 +338,7 @@ def drawMultipleEventsMenu(deadline, hours, minutes, currentDate, buttonNum, dea
         drawLabel(f'{hours} hrs', 1000, 142, align='center', size=17, font='DM Sans 36pt')
     else:
         drawLabel(f'{hours} hrs {minutes} min', 1000, 142, align='center', size=17, font='DM Sans 36pt')
-    drawDateButtons(810, 211, currentDate, buttonNum)
+    drawDateButtons(810, 211, currentDate+timedelta(days=2), buttonNum)
     drawLabel('Deadline', 810, 185, fill=rgb(167, 173, 173), size=25, align='left', font='DM Sans')
     drawRect(973, 185, 110, 35, align='center', fill=deadlineFill)
     drawLabel(deadline, 973, 185, align='center', size=25, font='DM Sans')
@@ -372,11 +399,29 @@ def getCurrentMonth(number):
         return 'December'
     
 def generateWeeklyEvents(app):
+    app.weeklyEvents = dict()
     for dates in app.weeklyDateList:
         app.weeklyEvents[dates] = []
-        for habits in app.habitsList:
+        for habits in app.habitsSet:
             if getCurrentDay(dates.weekday()) in habits.days:
                 app.weeklyEvents[dates].append(habits)
+        for singleEventTasks in app.singleEventTasks:
+            if dates == singleEventTasks.date:
+                app.weeklyEvents[dates].append(singleEventTasks)
+        for splitEventTasks in app.splitTaskWorkSessions:
+            for (startTime, endTime) in app.splitTaskWorkSessions[splitEventTasks]:
+                if dates == startTime.date():
+                    app.weeklyEvents[dates].append((startTime, endTime))
+
+def getDailyEvents(app, currDay):
+    dailyEvents = []
+    for habits in app.habitsSet:
+        if currDay.weekday() in habits.days:
+            dailyEvents.append(habits)
+    for singleEventTasks in app.singleEventTasks:
+        if currDay == singleEventTasks.date:
+            dailyEvents.append(singleEventTasks)
+    return dailyEvents
 
 def drawCalendarEvents(app):
     xCoord = 176
@@ -385,7 +430,33 @@ def drawCalendarEvents(app):
             startY = 0
             endY = 0
             yCoord = 156
-            if type(isinstance(event, Habit)):
+            if isinstance(event, tuple):
+                (startTime, endTime) = event
+                for i in range(len(app.shownTimes)-1):
+                    print(app.shownTimes[i].time(), startTime.time(), endTime.time())
+                    if app.shownTimes[i].time() < startTime.time() < app.shownTimes[i+1].time() and startY == 0:
+                        startY = yCoord + (startTime.minute/60)*78
+                    elif app.shownTimes[i].time() == startTime.time() and startY == 0:
+                        startY = yCoord
+                    elif app.shownTimes[i+1].time() == startTime.time() and startY == 0:
+                        startY = yCoord+78
+                    if app.shownTimes[i].time() < endTime.time() < app.shownTimes[i+1].time() and endY == 0:
+                        endY = yCoord + (endTime.minute/60)*78
+                    elif app.shownTimes[i].time() == endTime.time() and endY == 0:
+                        endY = yCoord
+                    elif app.shownTimes[i+1].time() == endTime.time() and endY == 0:
+                        endY = yCoord+78
+                    if startY != 0 and endY != 0:
+                        break
+                    yCoord += 78
+                print(startY, endY)
+                if startY != 0 and endY == 0 and startY != 780:
+                    drawRect(xCoord, startY, 170, 780-startY)
+                elif startY == 0 and endY != 0 and endY != 156:
+                    drawRect(xCoord, 156, 170, endY-156)
+                elif startY != 0 and endY != 0:
+                    drawRect(xCoord, startY, 170, endY-startY)
+            elif isinstance(event, Habit) or isinstance(event, SingleEvent):
                 for i in range(len(app.shownTimes)-1):
                     if app.shownTimes[i].time() < event.startTime.time() < app.shownTimes[i+1].time() and startY == 0:
                         startY = yCoord + (event.startTime.minute/60)*78
@@ -404,11 +475,51 @@ def drawCalendarEvents(app):
                     yCoord += 78
                 if startY != 0 and endY == 0 and startY != 780:
                     drawRect(xCoord, startY, 170, 780-startY)
-                elif startY == 0 and endY != 0:
+                elif startY == 0 and endY != 0 and endY != 156:
                     drawRect(xCoord, 156, 170, endY-156)
                 elif startY != 0 and endY != 0:
                     drawRect(xCoord, startY, 170, endY-startY)
+            
         xCoord += 170
+
+def generateWorkSessions(app):
+    for events in app.splitTasks:
+        app.splitTaskWorkSessions[events] = findAvailableDays(app, [], events.date - timedelta(days=1), getDurationEachDay(events.durationHours*60 + app.durationMinutes, events.daysTillDue))
+
+def getDurationEachDay(duration, days):
+    durationsList = []
+    for i in range(days):
+        durationsList.append(duration//days)
+    if sum(durationsList) != duration:
+        durationsList[-1] += duration-sum(durationsList)
+    return durationsList
+
+def findAvailableDays(app, currSolution, currDay, durationEachDay):
+    if durationEachDay == []:
+        return currSolution
+    else:
+        for startTime in getFormattedTimes(app, currDay):
+            if canAdd(app, startTime, durationEachDay[-1], currDay):
+                temp = durationEachDay.pop()
+                currDay -= timedelta(days=1)
+                currSolution.append((startTime, startTime+timedelta(hours=temp//60, minutes=temp%60)))
+                solution = findAvailableDays(app, currSolution, currDay, durationEachDay)
+                if solution != None:
+                    return solution
+                durationEachDay.append(temp)
+                currDay += timedelta(days=1)
+                currSolution.pop()
+        return None
+
+def canAdd(app, startTime, duration, currDay):
+    dailyEvents = getDailyEvents(app, currDay)
+    for event in dailyEvents:
+        if type(isinstance(event, Habit) or isinstance(event, SingleEvent)):
+            if event.startTime <= startTime+timedelta(hours=duration//60, minutes=duration%60) <= event.EndTime:
+                return False
+            elif event.startTime <= startTime <= event.endTime:
+                return False
+    return True       
     
 class SingleEvent:
 
@@ -420,7 +531,12 @@ class SingleEvent:
 
 class SplitEvent:
 
-    def __init__(self, deadline, date, name):
+    def __init__(self, deadline, durationMinutes, durationHours, date, name):
         self.deadline = deadline
+        self.durationMinutes = durationMinutes
+        self.durationHours = durationHours
         self.date = date
         self.name = name
+        ### Code taken from https://stackoverflow.com/questions/8419564/difference-between-two-dates-in-python ###
+        self.daysTillDue = abs(self.date-app.currentDate).days - 1
+        ##########################################################################################################

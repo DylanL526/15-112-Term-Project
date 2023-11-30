@@ -18,9 +18,10 @@ def onAppStart(app):
     app.index = 8
     app.taskName = 'Task name'
     app.habitName = 'Habit name'
-    app.singleEventTasks = []
+    app.singleEventTasks = set()
     app.splitTasks = set()
-    app.habitsList = []
+    app.splitTaskWorkSessions = dict()
+    app.habitsSet = set()
     app.taskNameTextField = False
     app.habitsNameTextField = False
     app.selectedHabitDays = set()
@@ -62,6 +63,7 @@ def onAppStart(app):
     app.onTasksButton = False
     app.onHabitsButton = False
     generateWeeklyEvents(app)
+    print(app.weeklyDateList)
     getShownTimes(app)
 
 def redrawAll(app):
@@ -237,7 +239,20 @@ def checkButtonPress(app, mouseX, mouseY):
         if 1095 < mouseX < 1193:
             if 344 < mouseY < 384:
                 if app.selectedDate != None and app.rect1Fill != rgb(255, 204, 203) and app.rect2Fill != rgb(255, 204, 203) and 'Task name' not in app.taskName and isLegalTime(app):
+                    app.startTime.replace('|', '')
+                    app.endTime.replace('|', '')
+                    app.singleEventTasks.add(SingleEvent(datetime.strptime(app.startTime, '%I:%M%p'), datetime.strptime(app.endTime, '%I:%M%p'), app.selectedDate, app.taskName))
+                    app.selectedDate = None
+                    app.rect1Fill = rgb(255, 255, 255)
+                    app.rect2Fill = rgb(255, 255, 255)
+                    app.taskName = 'Task name'
+                    app.taskNameTextField = False
+                    app.cursorTimer = 8
+                    app.clickedDayButton = 9
+                    app.startTime = '12:00pm'
+                    app.endTime = '12:00am'
                     app.taskPopUp = False
+                    generateWeeklyEvents(app)
                 elif app.rect1Fill != rgb(255, 204, 203) and app.rect2Fill != rgb(255, 204, 203) and isLegalTime(app) == False:
                     app.rect1Fill = rgb(255, 204, 203)
                     app.rect2Fill = rgb(255, 204, 203)
@@ -267,7 +282,20 @@ def checkButtonPress(app, mouseX, mouseY):
         if 1095 < mouseX < 1193: # Schedule Button
             if 344 < mouseY < 384:
                 if app.selectedDate != None and app.deadlineFill != rgb(255, 204, 203) and 'Task name' not in app.taskName and isLegalDeadline(app):
+                    app.splitTasks.add(SplitEvent(app.deadline, app.durationMinutes, app.durationHours, app.selectedDate, app.taskName))
+                    app.durationMinutes = 15
+                    app.durationHours = 0
+                    app.deadline.replace('|', '')
+                    app.splitTasks
+                    app.selectedDate = None
+                    app.deadlineFill = rgb(255, 255, 255)
+                    app.taskName = 'Task name'
+                    app.cursorTimer = 8
+                    app.clickedDayButton = 9
+                    app.taskNameTextField = False
                     app.taskPopUp = False
+                    generateWorkSessions(app)
+                    generateWeeklyEvents(app)
         if 1022 <= mouseX <= 1078: # Cancel button
             if 354 <= mouseY <= 374:
                 app.taskName = 'Task name'
@@ -294,7 +322,9 @@ def checkButtonPress(app, mouseX, mouseY):
         if 1095 < mouseX < 1193: # Schedule Button
             if 344 < mouseY < 384:
                 if app.selectedHabitDays != set() and app.rect3Fill != rgb(255, 204, 203) and app.rect4Fill != rgb(255, 204, 203) and 'Habit name' not in app.habitName and isLegalHabitTime(app):
-                    app.habitsList.append(Habit(app.habitName, app.selectedHabitDays, datetime.strptime(app.habitStartTime, '%I:%M%p'), datetime.strptime(app.habitEndTime, '%I:%M%p')))
+                    app.habitStartTime.replace('|', '')
+                    app.habitEndTime.replace('|', '')
+                    app.habitsSet.add(Habit(app.habitName, app.selectedHabitDays, datetime.strptime(app.habitStartTime, '%I:%M%p'), datetime.strptime(app.habitEndTime, '%I:%M%p')))
                     app.habitName = 'Habit name'
                     app.selectedHabitDays = set()
                     app.rect3Fill = rgb(255, 255, 255)
