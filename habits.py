@@ -82,3 +82,4 @@ class Habit:
         self.days = days
         self.startTime = startTime
         self.endTime = endTime
+        self.fill = "30, 33, 54" # Color sourced from https://i.pinimg.com/736x/af/34/ec/af34ec62e403206b0c9fce24051f9160.jpg

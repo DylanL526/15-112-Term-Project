@@ -11,6 +11,7 @@ def drawCalendar(app, currentDate, dateList):
     drawLine(78, 156, 1366, 156, fill=rgb(217, 217, 217))
     for y in range(234, 769, 78):
         drawLine(158, y, 1366, y, fill=rgb(217, 217, 217))
+    drawCalendarEvents(app)
     for x in range(176, 1200, 170):
         drawLine(x, 78, x, 780, fill=rgb(217, 217, 217))
     x = 91
@@ -25,7 +26,7 @@ def drawCalendar(app, currentDate, dateList):
     drawLabel('New Task', 1298, 39, size=19, align='center', font='DM Sans 36pt')
     drawLabel('+', 1243, 41, size=28, font='DM Sans 36pt')
     drawTimes(app)
-    drawCalendarEvents(app)
+    generateWorkSessions(app)
 
 def getDatesList(date):
     datesList = [date]
@@ -416,7 +417,7 @@ def generateWeeklyEvents(app):
 def getDailyEvents(app, currDay):
     dailyEvents = []
     for habits in app.habitsSet:
-        if currDay.weekday() in habits.days:
+        if getCurrentDay(currDay.weekday()) in habits.days:
             dailyEvents.append(habits)
     for singleEventTasks in app.singleEventTasks:
         if currDay == singleEventTasks.date:
@@ -431,9 +432,9 @@ def drawCalendarEvents(app):
             endY = 0
             yCoord = 156
             if isinstance(event, tuple):
+                splitTask = findSplitTask(app, event)
                 (startTime, endTime) = event
                 for i in range(len(app.shownTimes)-1):
-                    print(app.shownTimes[i].time(), startTime.time(), endTime.time())
                     if app.shownTimes[i].time() < startTime.time() < app.shownTimes[i+1].time() and startY == 0:
                         startY = yCoord + (startTime.minute/60)*78
                     elif app.shownTimes[i].time() == startTime.time() and startY == 0:
@@ -449,13 +450,24 @@ def drawCalendarEvents(app):
                     if startY != 0 and endY != 0:
                         break
                     yCoord += 78
-                print(startY, endY)
+                if splitTask != None:
+                    if '|' in splitTask.fill:
+                        colors = splitTask.fill.split('|')
+                    else:
+                        colors = splitTask.fill.split(',')
+                    r = int(colors[0])
+                    g = int(colors[1])
+                    b = int(colors[2])
+                else:
+                    r = 0
+                    g = 0
+                    b = 0
                 if startY != 0 and endY == 0 and startY != 780:
-                    drawRect(xCoord, startY, 170, 780-startY)
+                    drawRect(xCoord, startY, 170, 780-startY, fill=rgb(r, g, b))
                 elif startY == 0 and endY != 0 and endY != 156:
-                    drawRect(xCoord, 156, 170, endY-156)
+                    drawRect(xCoord, 156, 170, endY-156, fill=rgb(r, g, b))
                 elif startY != 0 and endY != 0:
-                    drawRect(xCoord, startY, 170, endY-startY)
+                    drawRect(xCoord, startY, 170, endY-startY, fill=rgb(r, g, b))
             elif isinstance(event, Habit) or isinstance(event, SingleEvent):
                 for i in range(len(app.shownTimes)-1):
                     if app.shownTimes[i].time() < event.startTime.time() < app.shownTimes[i+1].time() and startY == 0:
@@ -473,14 +485,23 @@ def drawCalendarEvents(app):
                     if startY != 0 and endY != 0:
                         break
                     yCoord += 78
+                colors = event.fill.split(',')
+                r = int(colors[0])
+                g = int(colors[1])
+                b = int(colors[2])
                 if startY != 0 and endY == 0 and startY != 780:
-                    drawRect(xCoord, startY, 170, 780-startY)
+                    drawRect(xCoord, startY, 170, 780-startY, fill=rgb(r, g, b))
                 elif startY == 0 and endY != 0 and endY != 156:
-                    drawRect(xCoord, 156, 170, endY-156)
+                    drawRect(xCoord, 156, 170, endY-156, fill=rgb(r, g, b))
                 elif startY != 0 and endY != 0:
-                    drawRect(xCoord, startY, 170, endY-startY)
+                    drawRect(xCoord, startY, 170, endY-startY, fill=rgb(r, g, b))
             
         xCoord += 170
+
+def findSplitTask(app, event):
+    for keys in app.splitTaskWorkSessions:
+        if event in app.splitTaskWorkSessions[keys]:
+            return keys
 
 def generateWorkSessions(app):
     for events in app.splitTasks:
@@ -514,29 +535,33 @@ def findAvailableDays(app, currSolution, currDay, durationEachDay):
 def canAdd(app, startTime, duration, currDay):
     dailyEvents = getDailyEvents(app, currDay)
     for event in dailyEvents:
-        if type(isinstance(event, Habit) or isinstance(event, SingleEvent)):
-            if event.startTime <= startTime+timedelta(hours=duration//60, minutes=duration%60) <= event.EndTime:
+        if isinstance(event, Habit) or isinstance(event, SingleEvent):
+            if event.startTime.time() <= (startTime+timedelta(hours=duration//60, minutes=duration%60)).time() <= event.endTime.time():
                 return False
-            elif event.startTime <= startTime <= event.endTime:
+            elif event.startTime.time() <= startTime.time() <= event.endTime.time():
+                return False
+            elif (startTime - timedelta(minutes=10)).time() <= event.endTime.time():
                 return False
     return True       
     
 class SingleEvent:
 
-    def __init__(self, startTime, endTime, date, name):
+    def __init__(self, startTime, endTime, date, name, fill):
         self.startTime = startTime
         self.endTime = endTime
         self.date = date
         self.name = name
+        self.fill = fill
 
 class SplitEvent:
 
-    def __init__(self, deadline, durationMinutes, durationHours, date, name):
+    def __init__(self, deadline, durationMinutes, durationHours, date, name, fill):
         self.deadline = deadline
         self.durationMinutes = durationMinutes
         self.durationHours = durationHours
         self.date = date
         self.name = name
+        self.fill = fill
         ### Code taken from https://stackoverflow.com/questions/8419564/difference-between-two-dates-in-python ###
         self.daysTillDue = abs(self.date-app.currentDate).days - 1
         ##########################################################################################################

@@ -3,7 +3,10 @@ from cmu_graphics import*
 from calendarScreen import*
 from tasks import*
 from habits import*
+from stats import*
 from PIL import Image
+import csv
+import random
 
 def onAppStart(app):
     app.background = rgb(246, 248, 252)
@@ -18,10 +21,10 @@ def onAppStart(app):
     app.index = 8
     app.taskName = 'Task name'
     app.habitName = 'Habit name'
-    app.singleEventTasks = set()
-    app.splitTasks = set()
+    app.singleEventTasks = importSingleEventData()
+    app.splitTasks = importSplitEventData()
     app.splitTaskWorkSessions = dict()
-    app.habitsSet = set()
+    app.habitsSet = importHabitData()
     app.taskNameTextField = False
     app.habitsNameTextField = False
     app.selectedHabitDays = set()
@@ -50,21 +53,74 @@ def onAppStart(app):
     app.rect2Fill = rgb(255, 255, 255)
     app.rect3Fill = rgb(255, 255, 255)
     app.rect4Fill = rgb(255, 255, 255)
+    app.colorPalette = ["251| 194| 194|", "203| 120| 118", "180| 207| 164", "98| 134| 108", "244| 211| 94",
+                        "246| 123| 69", "100| 85| 123", "187| 166| 221", "160| 197| 227", "50| 118| 155"] # Colors sourced from https://i.pinimg.com/736x/af/34/ec/af34ec62e403206b0c9fce24051f9160.jpg
     app.calendar = True
     app.taskPopUp = False
     app.singleEventChecked = False
     app.tasks = False
     app.habits = False
+    app.stats = False
     app.timeDelta = 0
     app.calendarButtonOpacity = 0
     app.tasksButtonOpacity = 0
     app.habitsButtonOpacity = 0
+    app.statsButtonOpacity = 0
     app.onCalendarButton = False
     app.onTasksButton = False
     app.onHabitsButton = False
+    app.onStatsButton = False
+    generateWorkSessions(app)
     generateWeeklyEvents(app)
-    print(app.weeklyDateList)
     getShownTimes(app)
+
+### Code from https://www.freecodecamp.org/news/how-to-create-a-csv-file-in-python/ ###
+
+def importHabitData():
+    habits = set()
+    with open("habitData.csv", 'r') as file:
+        csvreader = csv.reader(file)
+        header = next(csvreader)
+        for row in csvreader:
+            habits.add(Habit(row[0], row[1], datetime.strptime(row[2], '%Y-%m-%d %H:%M:%S'), datetime.strptime(row[3], '%Y-%m-%d %H:%M:%S')))
+    return habits
+
+def importSingleEventData():
+    singleEvents = set()
+    with open("singleEventData.csv", 'r') as file:
+        csvreader = csv.reader(file)
+        header = next(csvreader)
+        for row in csvreader:
+            color = row[4].replace('|', ',')
+            singleEvents.add(SingleEvent(datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S'), datetime.strptime(row[1], '%Y-%m-%d %H:%M:%S'), datetime.strptime(row[2], '%Y-%m-%d').date(), row[3], color))
+    return singleEvents
+
+def importSplitEventData():
+    splitEvents = set()
+    with open("splitEventData.csv", 'r') as file:
+        csvreader = csv.reader(file)
+        header = next(csvreader)
+        for row in csvreader:
+            color = row[5].replace('|', ',')
+            splitEvents.add(SplitEvent(row[0], int(row[1]), int(row[2]), datetime.strptime(row[3], '%Y-%m-%d').date(), row[4], color))
+    return splitEvents
+
+def writeHabitData(name, days, startTime, endTime):
+    with open('habitData.csv', 'a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([name, days, startTime, endTime])
+
+def writeSingleEventData(startTime, endTime, date, name, fill):
+    with open('singleEventData.csv', 'a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([startTime, endTime, date, name, fill])
+
+def writeSplitEventData(deadline, durationMinutes, durationHours, date, name, fill):
+    with open('splitEventData.csv', 'a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([deadline, durationMinutes, durationHours, date, name, fill])
+
+#######################################################################################
 
 def redrawAll(app):
     drawTaskBar(app)
@@ -78,10 +134,14 @@ def redrawAll(app):
                 drawSingleEventMenu(app.startTime, app.endTime, app.currentDate, app.clickedDayButton, app.rect1Fill, app.rect2Fill)
             else:
                 drawMultipleEventsMenu(app.deadline, app.durationHours, app.durationMinutes, app.currentDate, app.clickedDayButton, app.deadlineFill, app.plusOpacity, app.minusOpacity)
+    elif app.tasks == True:
+        drawTasks(app)
     elif app.habits == True:
         drawHabits(app)
         if app.habitsPopUp:
             drawHabitsPopUp(app.habitName, app.habitStartTime, app.habitEndTime, app.selectedHabitDays, app.rect3Fill, app.rect4Fill)
+    elif app.stats == True:
+        drawStats(app)
 
 def drawTaskBar(app):
     drawRect(0, 0, 78, 78, fill=rgb(25, 28, 28))
@@ -97,6 +157,9 @@ def drawTaskBar(app):
     habits = Image.open('Images/habits.png') # Icon taken from https://www.flaticon.com/free-icon/refresh_10899351?term=habits&page=1&position=29&origin=search&related_id=10899351
     drawRect(0, 234, 78, 78, fill=rgb(36, 42, 47), opacity = app.habitsButtonOpacity)
     drawImage(CMUImage(habits), 39, 273, align='center', width=23, height=23)
+    stats = Image.open('Images/graph.png') # Icon taken from https://www.flaticon.com/free-icon/graph_2567943?term=stats&page=1&position=3&origin=tag&related_id=2567943
+    drawRect(0, 312, 78, 78, fill=rgb(36, 42, 47), opacity = app.statsButtonOpacity)
+    drawImage(CMUImage(stats), 39, 351, align='center', width=23, height=23)
 
 def onMouseMove(app, mouseX, mouseY):
     checkOnButton(app, mouseX, mouseY)
@@ -115,10 +178,15 @@ def checkOnButton(app, mouseX, mouseY):
             app.onHabitsButton = True
         else:
             app.onHabitsButton = False
+        if 312 < mouseY < 390:
+            app.onStatsButton = True
+        else:
+            app.onStatsButton = False
     else:
         app.onCalendarButton = False
         app.onTasksButton = False
         app.onHabitsButton = False
+        app.onStatsButton = False
     if app.taskPopUp and app.singleEventChecked:
         if 810 <= mouseX <= 940 and 135 <= mouseY <= 175 and app.rect1Fill != rgb(255, 204, 203):
                 app.rect1Fill = rgb(238, 241, 247)
@@ -160,6 +228,8 @@ def onStep(app):
         app.selectedDate = app.dayButtonList[app.clickedDayButton]
     else:
         app.selectedDate = None
+    if len(app.dayButtonList) > 8:
+        app.dayButtonList = []
 
 def modifyButtonOpacity(app):
     if app.onCalendarButton and app.calendarButtonOpacity < 100:
@@ -168,12 +238,17 @@ def modifyButtonOpacity(app):
         app.tasksButtonOpacity += 25
     elif app.onHabitsButton and app.habitsButtonOpacity < 100:
         app.habitsButtonOpacity += 25
+    elif app.onStatsButton and app.statsButtonOpacity < 100:
+        app.statsButtonOpacity += 25
     if app.calendarButtonOpacity != 0 and app.onCalendarButton == False:
         app.calendarButtonOpacity -= 25
     if app.tasksButtonOpacity != 0 and app.onTasksButton == False:
         app.tasksButtonOpacity -= 25
     if app.habitsButtonOpacity != 0 and app.onHabitsButton == False:
         app.habitsButtonOpacity -= 25
+    if app.statsButtonOpacity != 0 and app.onStatsButton == False:
+        app.statsButtonOpacity -= 25
+    
 
 def onMousePress(app, mouseX, mouseY):
     checkButtonPress(app, mouseX, mouseY)
@@ -211,14 +286,22 @@ def checkButtonPress(app, mouseX, mouseY):
             app.calendar = True
             app.tasks = False
             app.habits = False
+            app.stats = False
         elif 156 < mouseY < 234:
             app.tasks = True
             app.calendar = False
             app.habits = False
+            app.stats = False
         elif 234 < mouseY < 312:
             app.tasks = False
             app.habits = True
             app.calendar = False
+            app.stats = False
+        elif 312 < mouseY < 390:
+            app.tasks = False
+            app.habits = False
+            app.calendar = False
+            app.stats = True
     elif 1224 < mouseX < 1352 and app.calendar == True:
         if 13 <= mouseY <= 65:
             app.taskPopUp = True
@@ -239,9 +322,11 @@ def checkButtonPress(app, mouseX, mouseY):
         if 1095 < mouseX < 1193:
             if 344 < mouseY < 384:
                 if app.selectedDate != None and app.rect1Fill != rgb(255, 204, 203) and app.rect2Fill != rgb(255, 204, 203) and 'Task name' not in app.taskName and isLegalTime(app):
-                    app.startTime.replace('|', '')
-                    app.endTime.replace('|', '')
-                    app.singleEventTasks.add(SingleEvent(datetime.strptime(app.startTime, '%I:%M%p'), datetime.strptime(app.endTime, '%I:%M%p'), app.selectedDate, app.taskName))
+                    app.startTime = app.startTime.replace('|', '')
+                    app.endTime = app.endTime.replace('|', '')
+                    fill = app.colorPalette[random.randrange(10)]
+                    app.singleEventTasks.add(SingleEvent(datetime.strptime(app.startTime, '%I:%M%p'), datetime.strptime(app.endTime, '%I:%M%p'), app.selectedDate, app.taskName, fill))
+                    writeSingleEventData(datetime.strptime(app.startTime, '%I:%M%p'), datetime.strptime(app.endTime, '%I:%M%p'), app.selectedDate, app.taskName, fill)
                     app.selectedDate = None
                     app.rect1Fill = rgb(255, 255, 255)
                     app.rect2Fill = rgb(255, 255, 255)
@@ -253,6 +338,7 @@ def checkButtonPress(app, mouseX, mouseY):
                     app.endTime = '12:00am'
                     app.taskPopUp = False
                     generateWeeklyEvents(app)
+                    generateWorkSessions(app)
                 elif app.rect1Fill != rgb(255, 204, 203) and app.rect2Fill != rgb(255, 204, 203) and isLegalTime(app) == False:
                     app.rect1Fill = rgb(255, 204, 203)
                     app.rect2Fill = rgb(255, 204, 203)
@@ -282,10 +368,12 @@ def checkButtonPress(app, mouseX, mouseY):
         if 1095 < mouseX < 1193: # Schedule Button
             if 344 < mouseY < 384:
                 if app.selectedDate != None and app.deadlineFill != rgb(255, 204, 203) and 'Task name' not in app.taskName and isLegalDeadline(app):
-                    app.splitTasks.add(SplitEvent(app.deadline, app.durationMinutes, app.durationHours, app.selectedDate, app.taskName))
+                    fill = app.colorPalette[random.randrange(10)]
+                    app.splitTasks.add(SplitEvent(app.deadline, app.durationMinutes, app.durationHours, app.selectedDate, app.taskName, fill))
+                    writeSplitEventData(app.deadline, app.durationMinutes, app.durationHours, app.selectedDate, app.taskName, fill)
                     app.durationMinutes = 15
                     app.durationHours = 0
-                    app.deadline.replace('|', '')
+                    app.deadline = app.deadline.replace('|', '')
                     app.splitTasks
                     app.selectedDate = None
                     app.deadlineFill = rgb(255, 255, 255)
@@ -294,8 +382,8 @@ def checkButtonPress(app, mouseX, mouseY):
                     app.clickedDayButton = 9
                     app.taskNameTextField = False
                     app.taskPopUp = False
-                    generateWorkSessions(app)
                     generateWeeklyEvents(app)
+                    generateWorkSessions(app)
         if 1022 <= mouseX <= 1078: # Cancel button
             if 354 <= mouseY <= 374:
                 app.taskName = 'Task name'
@@ -322,15 +410,17 @@ def checkButtonPress(app, mouseX, mouseY):
         if 1095 < mouseX < 1193: # Schedule Button
             if 344 < mouseY < 384:
                 if app.selectedHabitDays != set() and app.rect3Fill != rgb(255, 204, 203) and app.rect4Fill != rgb(255, 204, 203) and 'Habit name' not in app.habitName and isLegalHabitTime(app):
-                    app.habitStartTime.replace('|', '')
-                    app.habitEndTime.replace('|', '')
+                    app.habitStartTime = app.habitStartTime.replace('|', '')
+                    app.habitEndTime = app.habitEndTime.replace('|', '')
                     app.habitsSet.add(Habit(app.habitName, app.selectedHabitDays, datetime.strptime(app.habitStartTime, '%I:%M%p'), datetime.strptime(app.habitEndTime, '%I:%M%p')))
+                    writeHabitData(app.habitName, app.selectedHabitDays, datetime.strptime(app.habitStartTime, '%I:%M%p'), datetime.strptime(app.habitEndTime, '%I:%M%p'))
                     app.habitName = 'Habit name'
                     app.selectedHabitDays = set()
                     app.rect3Fill = rgb(255, 255, 255)
                     app.rect4Fill = rgb(255, 255, 255)
                     app.habitsPopUp = False
                     generateWeeklyEvents(app)
+                    generateWorkSessions(app)
                 elif app.rect3Fill != rgb(255, 204, 203) and app.rect4Fill != rgb(255, 204, 203) and isLegalHabitTime(app) == False:
                     app.rect3Fill = rgb(255, 204, 203)
                     app.rect4Fill = rgb(255, 204, 203)
@@ -347,10 +437,12 @@ def onKeyPress(app, key):
             app.timeDelta += 7
             app.weeklyDateList = getDatesList(app.currentDate + timedelta(days=app.timeDelta))
             generateWeeklyEvents(app)
+            generateWorkSessions(app)
         elif key == 'left':
             app.timeDelta -= 7
             app.weeklyDateList = getDatesList(app.currentDate + timedelta(days=app.timeDelta))
             generateWeeklyEvents(app)
+            generateWorkSessions(app)
         elif key == 'up' and app.index > 0:
             app.index -= 1
             getShownTimes(app)
