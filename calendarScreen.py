@@ -113,18 +113,27 @@ def drawSingleEventMenu(startTime, endTime, currentDate, buttonNum, rect1Fill, r
     drawRect(980, 135, 130, 40, fill=rect2Fill)
     drawLabel(endTime, 1045, 155, size=30, font='DM Sans')
     drawLabel('on', 1134, 159, size=30, fill=rgb(167, 173, 173), font='DM Sans')
-    drawDateButtons(810, 195, currentDate, buttonNum)
+    drawDateButtons(app.singleEventDayButtonList)
 
-def checkDayButtonPresses(app, mouseX, mouseY, coords):
-    buttonValue = 0
-    for (x, y) in coords:
-        if x <= mouseX <= x+90:
-            if y <= mouseY <= y+50:
-                if app.clickedDayButton == buttonValue:
-                    app.clickedDayButton = 9
-                else:
-                    app.clickedDayButton = buttonValue
-        buttonValue += 1
+def checkDayButtonPresses(mouseX, mouseY, buttonList):
+    if isinstance(buttonList[0].value, str):
+        for buttons in buttonList:
+            buttons.checkForMultiPress(mouseX, mouseY)
+            if buttons.selected:
+                app.selectedHabitDays.add(buttons.value)
+            else:
+                if buttons.value in app.selectedHabitDays:
+                    app.selectedHabitDays.remove(buttons.value)
+    else:
+        noneCount = 0
+        for buttons in buttonList:
+            buttons.checkForPress(mouseX, mouseY)
+            if buttons.selected:
+                app.selectedDate = buttons.value
+            else:
+                noneCount += 1
+        if noneCount == 8:
+            app.selectedDate = None
 
 def checkStartEndTimePresses(app, mouseX, mouseY):
     if 810 <= mouseX <= 940:
@@ -307,22 +316,34 @@ def checkInTextField(app):
                 app.cursorTimer = 0
                 app.deadline = app.deadline[:-1]
 
-def drawDateButtons(startX, startY, currentDate, buttonNum):
-    x = startX
-    y = startY
-    for nums in range(0, 8):
-        if nums == buttonNum:
-            drawRect(x, y, 90, 50, fill=rgb(167, 173, 173), border=gradient(rgb(140, 82, 255), rgb(255, 145, 77), start='left'), borderWidth=4)
+def drawDateButtons(buttonList):
+    for buttons in buttonList:
+        if buttons.selected:
+            drawRect(buttons.x, buttons.y, buttons.width, buttons.height, fill=rgb(167, 173, 173), border=gradient(rgb(140, 82, 255), rgb(255, 145, 77), start='left'), borderWidth=4)
         else:
-            drawRect(x, y, 90, 50, fill=rgb(167, 173, 173))
-        nextDate = currentDate + timedelta(days=nums)
-        if nextDate not in app.dayButtonList:
-            app.dayButtonList.append(nextDate)
-        drawLabel(str(nextDate.month) + '/' + str(nextDate.day), x+45, y+25, fill='white', size=15, font='DM Sans')
-        x += 95
-        if x == 1190:
-            x = startX
-            y += 55
+            drawRect(buttons.x, buttons.y, buttons.width, buttons.height, fill=rgb(167, 173, 173))
+        label = str(buttons.value.month) + '/' + str(buttons.value.day)
+        drawLabel(label, buttons.x+45, buttons.y+25, fill='white', size=15, font='DM Sans')
+
+def createDateButtons(startX, startY, currentDate, offset):
+    dateButtonsList = []
+    if currentDate != None:
+        x = startX
+        y = startY
+        for i in range(0, 8):
+            nextDate = currentDate + timedelta(days=i+offset)
+            dateButtonsList.append(Button(x, y, 90, 50, nextDate))
+            x += 95
+            if x == 1190:
+                x = startX
+                y += 55
+    else:
+        dayList = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+        x = startX
+        y = startY
+        for i in range(7):
+            dateButtonsList.append(Button(x, y, 90, 50, dayList[i]))
+    return dateButtonsList
 
 def drawMultipleEventsMenu(deadline, hours, minutes, currentDate, buttonNum, deadlineFill, plusOpacity, minusOpacity):
     drawLabel('Duration', 810, 142, fill=rgb(167, 173, 173), size=25, align='left', font='DM Sans')
@@ -339,7 +360,7 @@ def drawMultipleEventsMenu(deadline, hours, minutes, currentDate, buttonNum, dea
         drawLabel(f'{hours} hrs', 1000, 142, align='center', size=17, font='DM Sans 36pt')
     else:
         drawLabel(f'{hours} hrs {minutes} min', 1000, 142, align='center', size=17, font='DM Sans 36pt')
-    drawDateButtons(810, 211, currentDate+timedelta(days=2), buttonNum)
+    drawDateButtons(app.splitEventDayButtonList)
     drawLabel('Deadline', 810, 185, fill=rgb(167, 173, 173), size=25, align='left', font='DM Sans')
     drawRect(973, 185, 110, 35, align='center', fill=deadlineFill)
     drawLabel(deadline, 973, 185, align='center', size=25, font='DM Sans')
@@ -410,9 +431,10 @@ def generateWeeklyEvents(app):
             if dates == singleEventTasks.date:
                 app.weeklyEvents[dates].append(singleEventTasks)
         for splitEventTasks in app.splitTaskWorkSessions:
-            for (startTime, endTime) in app.splitTaskWorkSessions[splitEventTasks]:
-                if dates == startTime.date():
-                    app.weeklyEvents[dates].append((startTime, endTime))
+            if app.splitTaskWorkSessions[splitEventTasks] != None:
+                for (startTime, endTime) in app.splitTaskWorkSessions[splitEventTasks]:
+                    if dates == startTime.date():
+                        app.weeklyEvents[dates].append((startTime, endTime))
 
 def getDailyEvents(app, currDay):
     dailyEvents = []
@@ -458,10 +480,6 @@ def drawCalendarEvents(app):
                     r = int(colors[0])
                     g = int(colors[1])
                     b = int(colors[2])
-                else:
-                    r = 0
-                    g = 0
-                    b = 0
                 if startY != 0 and endY == 0 and startY != 780:
                     drawRect(xCoord, startY, 170, 780-startY, fill=rgb(r, g, b))
                 elif startY == 0 and endY != 0 and endY != 156:
@@ -505,7 +523,7 @@ def findSplitTask(app, event):
 
 def generateWorkSessions(app):
     for events in app.splitTasks:
-        app.splitTaskWorkSessions[events] = findAvailableDays(app, [], events.date - timedelta(days=1), getDurationEachDay(events.durationHours*60 + app.durationMinutes, events.daysTillDue))
+        app.splitTaskWorkSessions[events] = findAvailableDays(app, [], events.date - timedelta(days=1), getDurationEachDay(events.durationHours*60 + events.durationMinutes, events.daysTillDue))
 
 def getDurationEachDay(duration, days):
     durationsList = []
@@ -544,6 +562,33 @@ def canAdd(app, startTime, duration, currDay):
                 return False
     return True       
     
+class Button:
+
+    def __init__(self, x, y, width, height, value):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.value = value
+        self.selected = False
+
+    def checkForPress(self, mouseX, mouseY):
+        if self.x <= mouseX <= self.x+self.width and self.y <= mouseY <= self.y+self.height:
+            self.selected = not self.selected
+        else:
+            if self in app.singleEventDayButtonList:
+                for buttons in app.singleEventDayButtonList:
+                    if buttons.x <= mouseX <= buttons.x+buttons.width and buttons.y <= mouseY <= buttons.y+buttons.height:
+                        self.selected = False
+            else:
+                for buttons in app.splitEventDayButtonList:
+                    if buttons.x <= mouseX <= buttons.x+buttons.width and buttons.y <= mouseY <= buttons.y+buttons.height:
+                        self.selected = False
+    
+    def checkForMultiPress(self, mouseX, mouseY):
+        if self.x <= mouseX <= self.x+self.width and self.y <= mouseY <= self.y+self.height:
+            self.selected = not self.selected
+
 class SingleEvent:
 
     def __init__(self, startTime, endTime, date, name, fill):

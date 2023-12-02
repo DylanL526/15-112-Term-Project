@@ -40,6 +40,9 @@ def onAppStart(app):
     app.durationTextField = False
     app.cursorTimer = 8
     app.clickedDayButton = 9
+    app.singleEventDayButtonList = createDateButtons(810, 195, app.currentDate, 0)
+    app.splitEventDayButtonList = createDateButtons(810, 211, app.currentDate, 2)
+    app.habitsButtonList = createDateButtons(810, 211, None, 0)
     app.dayButtonList = []
     app.selectedDate = None
     app.startTime = '12:00pm'
@@ -224,12 +227,6 @@ def onStep(app):
     checkInTextField(app)
     checkTextFieldLegality(app)
     checkDeadlineLegality(app)
-    if app.clickedDayButton != 9:
-        app.selectedDate = app.dayButtonList[app.clickedDayButton]
-    else:
-        app.selectedDate = None
-    if len(app.dayButtonList) > 8:
-        app.dayButtonList = []
 
 def modifyButtonOpacity(app):
     if app.onCalendarButton and app.calendarButtonOpacity < 100:
@@ -248,18 +245,17 @@ def modifyButtonOpacity(app):
         app.habitsButtonOpacity -= 25
     if app.statsButtonOpacity != 0 and app.onStatsButton == False:
         app.statsButtonOpacity -= 25
-    
 
 def onMousePress(app, mouseX, mouseY):
     checkButtonPress(app, mouseX, mouseY)
     if app.taskPopUp and app.singleEventChecked:
-        checkDayButtonPresses(app, mouseX, mouseY, [(810, 195), (905, 195), (1000, 195), (1095, 195), (810, 250), (905, 250), (1000, 250), (1095, 250)])
+        checkDayButtonPresses(mouseX, mouseY, app.singleEventDayButtonList)
         checkStartEndTimePresses(app, mouseX, mouseY)
     elif app.taskPopUp:
         checkDeadlinePress(app, mouseX, mouseY)
         checkDurationPress(app, mouseX, mouseY)
         checkPlusMinusButtons(app, mouseX, mouseY)
-        checkDayButtonPresses(app, mouseX, mouseY, [(810, 211), (905, 211), (1000, 211), (1095, 211), (810, 266), (905, 266), (1000, 266), (1095, 266)])
+        checkDayButtonPresses(mouseX, mouseY, app.splitEventDayButtonList)
     elif app.habitsPopUp:
         checkHabitStartEndTimePresses(app, mouseX, mouseY)
         checkMultiDayButtonPresses(app, mouseX, mouseY, [(810, 211), (905, 211), (1000, 211), (1095, 211), (810, 266), (905, 266), (1000, 266), (1095, 266)])
@@ -354,6 +350,7 @@ def checkButtonPress(app, mouseX, mouseY):
         if 810 <= mouseX <= 830:
             if 95 <= mouseY <= 115:
                 app.singleEventChecked = not app.singleEventChecked
+                app.selectedDate = None
     elif app.taskPopUp:
         if 810 <= mouseX <= 1190:
             if 32 <= mouseY <= 60:
@@ -374,7 +371,6 @@ def checkButtonPress(app, mouseX, mouseY):
                     app.durationMinutes = 15
                     app.durationHours = 0
                     app.deadline = app.deadline.replace('|', '')
-                    app.splitTasks
                     app.selectedDate = None
                     app.deadlineFill = rgb(255, 255, 255)
                     app.taskName = 'Task name'
