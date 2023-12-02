@@ -21,6 +21,7 @@ def onAppStart(app):
     app.index = 8
     app.taskName = 'Task name'
     app.habitName = 'Habit name'
+    app.taskBarButtons = [Button(0, 78, 78, 78, False), Button(0, 156, 78, 78, False), Button(0, 234, 78, 78, False), Button(0, 312, 78, 78, False)]
     app.singleEventTasks = importSingleEventData()
     app.splitTasks = importSplitEventData()
     app.splitTaskWorkSessions = dict()
@@ -28,22 +29,23 @@ def onAppStart(app):
     app.taskNameTextField = False
     app.habitsNameTextField = False
     app.selectedHabitDays = set()
-    app.habitsPopUp = False
+    app.habitsPopUp = Button(1224, 13, 128, 52, False)
     app.rect1TextField = False
     app.rect2TextField = False
     app.rect3TextField = False
     app.rect4TextField = False
     app.deadlineTextField = False
     app.deadlineFill = rgb(255, 255, 255)
-    app.minusOpacity = 0
-    app.plusOpacity = 0
+    app.minusButton = Button(926, 130, 24, 24, False)
+    app.plusButton = Button(1053, 132, 20, 20, False)
     app.durationTextField = False
     app.cursorTimer = 8
     app.clickedDayButton = 9
     app.singleEventDayButtonList = createDateButtons(810, 195, app.currentDate, 0)
     app.splitEventDayButtonList = createDateButtons(810, 211, app.currentDate, 2)
-    app.habitsButtonList = createDateButtons(810, 211, None, 0)
-    app.dayButtonList = []
+    app.habitsDayButtonList = createDateButtons(810, 211, None, 0)
+    app.cancelButton = Button(1020, 355, 60, 20, False)
+    app.scheduleButton = Button(1095, 344, 98, 40, False)
     app.selectedDate = None
     app.startTime = '12:00pm'
     app.endTime = '12:00am'
@@ -59,20 +61,12 @@ def onAppStart(app):
     app.colorPalette = ["251| 194| 194|", "203| 120| 118", "180| 207| 164", "98| 134| 108", "244| 211| 94",
                         "246| 123| 69", "100| 85| 123", "187| 166| 221", "160| 197| 227", "50| 118| 155"] # Colors sourced from https://i.pinimg.com/736x/af/34/ec/af34ec62e403206b0c9fce24051f9160.jpg
     app.calendar = True
-    app.taskPopUp = False
-    app.singleEventChecked = False
+    app.taskPopUp = Button(1224, 13, 128, 52, False)
+    app.singleEventButton = Button(810, 95, 20, 20, False)
     app.tasks = False
     app.habits = False
     app.stats = False
     app.timeDelta = 0
-    app.calendarButtonOpacity = 0
-    app.tasksButtonOpacity = 0
-    app.habitsButtonOpacity = 0
-    app.statsButtonOpacity = 0
-    app.onCalendarButton = False
-    app.onTasksButton = False
-    app.onHabitsButton = False
-    app.onStatsButton = False
     generateWorkSessions(app)
     generateWeeklyEvents(app)
     getShownTimes(app)
@@ -130,67 +124,44 @@ def redrawAll(app):
     if app.calendar == True:
         date = app.currentDate + timedelta(days=app.timeDelta)
         drawCalendar(app, app.currentDate, getDatesList(date))
-        if app.taskPopUp:
+        if app.taskPopUp.value:
             drawTaskPopUp(app.taskName)
-            drawCheckBox(app.singleEventChecked)
-            if app.singleEventChecked:
+            drawCheckBox(app.singleEventButton.value)
+            if app.singleEventButton.value:
                 drawSingleEventMenu(app.startTime, app.endTime, app.currentDate, app.clickedDayButton, app.rect1Fill, app.rect2Fill)
             else:
-                drawMultipleEventsMenu(app.deadline, app.durationHours, app.durationMinutes, app.currentDate, app.clickedDayButton, app.deadlineFill, app.plusOpacity, app.minusOpacity)
+                drawMultipleEventsMenu(app.deadline, app.durationHours, app.durationMinutes, app.currentDate, app.clickedDayButton, app.deadlineFill, app.plusButton.opacity, app.minusButton.opacity)
     elif app.tasks == True:
         drawTasks(app)
     elif app.habits == True:
         drawHabits(app)
-        if app.habitsPopUp:
+        if app.habitsPopUp.value:
             drawHabitsPopUp(app.habitName, app.habitStartTime, app.habitEndTime, app.selectedHabitDays, app.rect3Fill, app.rect4Fill)
     elif app.stats == True:
         drawStats(app)
 
 def drawTaskBar(app):
-    drawRect(0, 0, 78, 78, fill=rgb(25, 28, 28))
+    drawRect(0, 0, 78, 780, fill=rgb(25, 28, 28))
+    for buttons in app.taskBarButtons:
+        drawRect(buttons.x, buttons.y, buttons.width, buttons.height, fill=rgb(36, 42, 47), opacity=buttons.opacity)
     logo = Image.open('Images/hourglasslogo.png') # Icon taken from https://www.facebook.com/subtleclassics/
-    drawRect(0, 78, 78, 702, fill=rgb(25, 28, 28))
     drawImage(CMUImage(logo), 39, 39, align='center', width=35, height=35)
     calendar = Image.open('Images/calendar.png') # Icon taken from https://www.flaticon.com/free-icon/calendar_3239948?term=calendar&page=1&position=13&origin=search&related_id=3239948
-    drawRect(0, 78, 78, 78, fill=rgb(36, 42, 47), opacity = app.calendarButtonOpacity)
     drawImage(CMUImage(calendar), 39, 117, align='center', width=23, height=23)
     tasks = Image.open('Images/tasks.png') # Icon taken from https://www.flaticon.com/free-icon/clipboard_839860?term=clipboard&page=1&position=2&origin=search&related_id=839860
-    drawRect(0, 156, 78, 78, fill=rgb(36, 42, 47), opacity = app.tasksButtonOpacity)
     drawImage(CMUImage(tasks), 39, 195, align='center', width=23, height=23)
     habits = Image.open('Images/habits.png') # Icon taken from https://www.flaticon.com/free-icon/refresh_10899351?term=habits&page=1&position=29&origin=search&related_id=10899351
-    drawRect(0, 234, 78, 78, fill=rgb(36, 42, 47), opacity = app.habitsButtonOpacity)
     drawImage(CMUImage(habits), 39, 273, align='center', width=23, height=23)
     stats = Image.open('Images/graph.png') # Icon taken from https://www.flaticon.com/free-icon/graph_2567943?term=stats&page=1&position=3&origin=tag&related_id=2567943
-    drawRect(0, 312, 78, 78, fill=rgb(36, 42, 47), opacity = app.statsButtonOpacity)
     drawImage(CMUImage(stats), 39, 351, align='center', width=23, height=23)
 
 def onMouseMove(app, mouseX, mouseY):
     checkOnButton(app, mouseX, mouseY)
 
 def checkOnButton(app, mouseX, mouseY):
-    if 0 <= mouseX <= 78:
-        if 78 < mouseY < 156:
-            app.onCalendarButton = True
-        else:
-            app.onCalendarButton = False
-        if 156 < mouseY < 234:
-            app.onTasksButton = True
-        else:
-            app.onTasksButton = False
-        if 234 < mouseY < 312:
-            app.onHabitsButton = True
-        else:
-            app.onHabitsButton = False
-        if 312 < mouseY < 390:
-            app.onStatsButton = True
-        else:
-            app.onStatsButton = False
-    else:
-        app.onCalendarButton = False
-        app.onTasksButton = False
-        app.onHabitsButton = False
-        app.onStatsButton = False
-    if app.taskPopUp and app.singleEventChecked:
+    for buttons in app.taskBarButtons:
+        buttons.checkOnButton(mouseX, mouseY)
+    if app.taskPopUp.value and app.singleEventButton.value:
         if 810 <= mouseX <= 940 and 135 <= mouseY <= 175 and app.rect1Fill != rgb(255, 204, 203):
                 app.rect1Fill = rgb(238, 241, 247)
         elif app.rect1Fill != rgb(255, 204, 203):
@@ -199,20 +170,22 @@ def checkOnButton(app, mouseX, mouseY):
                 app.rect2Fill = rgb(238, 241, 247)
         elif app.rect2Fill != rgb(255, 204, 203):
             app.rect2Fill = rgb(255, 255, 255)
-    elif app.taskPopUp:
+    elif app.taskPopUp.value:
         if 918 <= mouseX <= 1028 and 168 <= mouseY <= 202:
             app.deadlineFill = rgb(238, 241, 247)
         else:
             app.deadlineFill = rgb(255, 255, 255)
-        if 926 <= mouseX <= 950 and 130 <= mouseY <= 154:
-            app.minusOpacity = 100
+        app.minusButton.checkOnButton(mouseX, mouseY)
+        if app.minusButton.onButton:
+            app.minusButton.opacity = 100
         else:
-            app.minusOpacity = 0
-        if 1053 <= mouseX <= 1073 and 132 <= mouseY <= 152:
-            app.plusOpacity = 100
+            app.minusButton.opacity = 0
+        app.plusButton.checkOnButton(mouseX, mouseY)
+        if app.plusButton.onButton:
+            app.plusButton.opacity = 100
         else:
-            app.plusOpacity = 0
-    elif app.habitsPopUp:
+            app.plusButton.opacity = 0
+    elif app.habitsPopUp.value:
         if 806 <= mouseX <= 936 and 121 <= mouseY <= 161:
             app.rect3Fill = rgb(238, 241, 247)
         else:
@@ -229,39 +202,30 @@ def onStep(app):
     checkDeadlineLegality(app)
 
 def modifyButtonOpacity(app):
-    if app.onCalendarButton and app.calendarButtonOpacity < 100:
-        app.calendarButtonOpacity += 25
-    elif app.onTasksButton and app.tasksButtonOpacity < 100:
-        app.tasksButtonOpacity += 25
-    elif app.onHabitsButton and app.habitsButtonOpacity < 100:
-        app.habitsButtonOpacity += 25
-    elif app.onStatsButton and app.statsButtonOpacity < 100:
-        app.statsButtonOpacity += 25
-    if app.calendarButtonOpacity != 0 and app.onCalendarButton == False:
-        app.calendarButtonOpacity -= 25
-    if app.tasksButtonOpacity != 0 and app.onTasksButton == False:
-        app.tasksButtonOpacity -= 25
-    if app.habitsButtonOpacity != 0 and app.onHabitsButton == False:
-        app.habitsButtonOpacity -= 25
-    if app.statsButtonOpacity != 0 and app.onStatsButton == False:
-        app.statsButtonOpacity -= 25
+    for buttons in app.taskBarButtons:
+        if buttons.onButton and buttons.opacity < 100:
+            buttons.opacity += 25
+        elif buttons.onButton == False and buttons.opacity > 0:
+            buttons.opacity -= 25
 
 def onMousePress(app, mouseX, mouseY):
     checkButtonPress(app, mouseX, mouseY)
-    if app.taskPopUp and app.singleEventChecked:
+    if app.taskPopUp.value and app.singleEventButton.value:
         checkDayButtonPresses(mouseX, mouseY, app.singleEventDayButtonList)
         checkStartEndTimePresses(app, mouseX, mouseY)
-    elif app.taskPopUp:
+    elif app.taskPopUp.value:
         checkDeadlinePress(app, mouseX, mouseY)
         checkDurationPress(app, mouseX, mouseY)
         checkPlusMinusButtons(app, mouseX, mouseY)
         checkDayButtonPresses(mouseX, mouseY, app.splitEventDayButtonList)
-    elif app.habitsPopUp:
+    elif app.habitsPopUp.value:
         checkHabitStartEndTimePresses(app, mouseX, mouseY)
-        checkMultiDayButtonPresses(app, mouseX, mouseY, [(810, 211), (905, 211), (1000, 211), (1095, 211), (810, 266), (905, 266), (1000, 266), (1095, 266)])
+        checkDayButtonPresses(mouseX, mouseY, app.habitsDayButtonList)
 
 def checkPlusMinusButtons(app, mouseX, mouseY):
-    if 926 <= mouseX <= 950 and 130 <= mouseY <= 154:
+    app.minusButton.checkForPress(mouseX, mouseY)
+    if app.minusButton.value:
+        app.minusButton.value = False
         if app.durationMinutes == 0:
             app.durationHours -= 1
             app.durationMinutes = 45
@@ -269,7 +233,9 @@ def checkPlusMinusButtons(app, mouseX, mouseY):
             return
         else:
             app.durationMinutes -= 15
-    if 1053 <= mouseX <= 1073 and 132 <= mouseY <= 152:
+    app.plusButton.checkForPress(mouseX, mouseY)
+    if app.plusButton.value:
+        app.plusButton.value = False
         if app.durationMinutes + 15 != 60:
             app.durationMinutes += 15
         else:
@@ -298,13 +264,11 @@ def checkButtonPress(app, mouseX, mouseY):
             app.habits = False
             app.calendar = False
             app.stats = True
-    elif 1224 < mouseX < 1352 and app.calendar == True:
-        if 13 <= mouseY <= 65:
-            app.taskPopUp = True
-    elif 1224 < mouseX < 1352 and app.habits == True:
-        if 13 <= mouseY <= 65:
-            app.habitsPopUp = True
-    if app.taskPopUp and app.singleEventChecked:
+    if app.calendar == True:
+        app.taskPopUp.checkForPress(mouseX, mouseY)
+    elif app.habits == True:
+        app.habitsPopUp.checkForPress(mouseX, mouseY)
+    if app.taskPopUp.value and app.singleEventButton.value:
         if 810 <= mouseX <= 1190:
             if 32 <= mouseY <= 60:
                 app.cursorTimer = 8
@@ -315,8 +279,8 @@ def checkButtonPress(app, mouseX, mouseY):
         else:
             app.taskNameTextField = False
             app.taskName = app.taskName.replace('|', '')
-        if 1095 < mouseX < 1193:
-            if 344 < mouseY < 384:
+        app.scheduleButton.checkForPress(mouseX, mouseY)
+        if app.scheduleButton.value:
                 if app.selectedDate != None and app.rect1Fill != rgb(255, 204, 203) and app.rect2Fill != rgb(255, 204, 203) and 'Task name' not in app.taskName and isLegalTime(app):
                     app.startTime = app.startTime.replace('|', '')
                     app.endTime = app.endTime.replace('|', '')
@@ -332,7 +296,7 @@ def checkButtonPress(app, mouseX, mouseY):
                     app.clickedDayButton = 9
                     app.startTime = '12:00pm'
                     app.endTime = '12:00am'
-                    app.taskPopUp = False
+                    app.taskPopUp.value = False
                     generateWeeklyEvents(app)
                     generateWorkSessions(app)
                 elif app.rect1Fill != rgb(255, 204, 203) and app.rect2Fill != rgb(255, 204, 203) and isLegalTime(app) == False:
@@ -340,18 +304,15 @@ def checkButtonPress(app, mouseX, mouseY):
                     app.rect2Fill = rgb(255, 204, 203)
         if 1022 <= mouseX <= 1078:
             if 354 <= mouseY <= 374:
-                app.taskPopUp = False
+                app.taskPopUp.value = False
                 app.taskName = 'Task name'
                 app.taskNameTextField = False
                 app.cursorTimer = 8
                 app.clickedDayButton = 9
                 app.startTime = '12:00pm'
                 app.endTime = '12:00am'
-        if 810 <= mouseX <= 830:
-            if 95 <= mouseY <= 115:
-                app.singleEventChecked = not app.singleEventChecked
-                app.selectedDate = None
-    elif app.taskPopUp:
+        app.singleEventButton.checkForCheckboxPress(mouseX, mouseY)
+    elif app.taskPopUp.value:
         if 810 <= mouseX <= 1190:
             if 32 <= mouseY <= 60:
                 app.cursorTimer = 8
@@ -362,10 +323,11 @@ def checkButtonPress(app, mouseX, mouseY):
         else:
             app.taskNameTextField = False
             app.taskName = app.taskName.replace('|', '')
-        if 1095 < mouseX < 1193: # Schedule Button
-            if 344 < mouseY < 384:
+        app.scheduleButton.checkForPress(mouseX, mouseY)
+        if app.scheduleButton.value:
                 if app.selectedDate != None and app.deadlineFill != rgb(255, 204, 203) and 'Task name' not in app.taskName and isLegalDeadline(app):
                     fill = app.colorPalette[random.randrange(10)]
+                    app.scheduleButton.value = False
                     app.splitTasks.add(SplitEvent(app.deadline, app.durationMinutes, app.durationHours, app.selectedDate, app.taskName, fill))
                     writeSplitEventData(app.deadline, app.durationMinutes, app.durationHours, app.selectedDate, app.taskName, fill)
                     app.durationMinutes = 15
@@ -377,34 +339,33 @@ def checkButtonPress(app, mouseX, mouseY):
                     app.cursorTimer = 8
                     app.clickedDayButton = 9
                     app.taskNameTextField = False
-                    app.taskPopUp = False
+                    app.taskPopUp.value = False
                     generateWeeklyEvents(app)
                     generateWorkSessions(app)
-        if 1022 <= mouseX <= 1078: # Cancel button
-            if 354 <= mouseY <= 374:
+        app.cancelButton.checkForPress(mouseX, mouseY)
+        if app.cancelButton.value:
                 app.taskName = 'Task name'
                 app.deadline = '12:00pm'
+                app.cancelButton.value = False
                 app.taskNameTextField = False
                 app.cursorTimer = 8
                 app.clickedDayButton = 9
                 app.durationMinutes = 15
                 app.durationHours = 0
-                app.taskPopUp = False
-        if 810 <= mouseX <= 830:
-            if 95 <= mouseY <= 115:
-                app.singleEventChecked = not app.singleEventChecked
+                app.taskPopUp.value = False
+        app.singleEventButton.checkForCheckboxPress(mouseX, mouseY)
         if 918 <= mouseX <= 1028 and 168 <= mouseY <= 202:
             app.cursorTimer = 8
             app.deadlineTextField = True
         else:
             app.deadlineTextField = False
             app.deadline = app.deadline.replace('|', '')
-    if app.habitsPopUp:
-        if 1022 <= mouseX <= 1078: # Cancel button
-            if 354 <= mouseY <= 374:
-                app.habitsPopUp = False
-        if 1095 < mouseX < 1193: # Schedule Button
-            if 344 < mouseY < 384:
+    if app.habitsPopUp.value:
+        app.cancelButton.checkForPress(mouseX, mouseY)
+        if app.cancelButton.value:
+                app.habitsPopUp.value = False
+        app.scheduleButton.checkForPress(mouseX, mouseY)
+        if app.scheduleButton.value:
                 if app.selectedHabitDays != set() and app.rect3Fill != rgb(255, 204, 203) and app.rect4Fill != rgb(255, 204, 203) and 'Habit name' not in app.habitName and isLegalHabitTime(app):
                     app.habitStartTime = app.habitStartTime.replace('|', '')
                     app.habitEndTime = app.habitEndTime.replace('|', '')
@@ -414,7 +375,7 @@ def checkButtonPress(app, mouseX, mouseY):
                     app.selectedHabitDays = set()
                     app.rect3Fill = rgb(255, 255, 255)
                     app.rect4Fill = rgb(255, 255, 255)
-                    app.habitsPopUp = False
+                    app.habitsPopUp.value = False
                     generateWeeklyEvents(app)
                     generateWorkSessions(app)
                 elif app.rect3Fill != rgb(255, 204, 203) and app.rect4Fill != rgb(255, 204, 203) and isLegalHabitTime(app) == False:
@@ -428,7 +389,7 @@ def checkButtonPress(app, mouseX, mouseY):
             app.habitName = app.habitName.replace('|', '')
 
 def onKeyPress(app, key):
-    if app.taskPopUp == False:
+    if app.taskPopUp.value == False:
         if key == 'right':
             app.timeDelta += 7
             app.weeklyDateList = getDatesList(app.currentDate + timedelta(days=app.timeDelta))

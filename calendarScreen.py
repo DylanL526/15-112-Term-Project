@@ -277,7 +277,7 @@ def checkInTextField(app):
         if app.habitEndTime != '' and app.habitEndTime[-1] == '|':
             app.habitEndTime = app.habitEndTime[:-1]
             app.cursorTimer = 0
-    if app.singleEventChecked:
+    if app.singleEventButton.value:
         if app.rect1TextField:
             app.rect1Fill = rgb(238, 241, 247)
             if app.cursorTimer == 8 and (app.startTime == '' or app.startTime[-1] != '|'):
@@ -316,15 +316,6 @@ def checkInTextField(app):
                 app.cursorTimer = 0
                 app.deadline = app.deadline[:-1]
 
-def drawDateButtons(buttonList):
-    for buttons in buttonList:
-        if buttons.selected:
-            drawRect(buttons.x, buttons.y, buttons.width, buttons.height, fill=rgb(167, 173, 173), border=gradient(rgb(140, 82, 255), rgb(255, 145, 77), start='left'), borderWidth=4)
-        else:
-            drawRect(buttons.x, buttons.y, buttons.width, buttons.height, fill=rgb(167, 173, 173))
-        label = str(buttons.value.month) + '/' + str(buttons.value.day)
-        drawLabel(label, buttons.x+45, buttons.y+25, fill='white', size=15, font='DM Sans')
-
 def createDateButtons(startX, startY, currentDate, offset):
     dateButtonsList = []
     if currentDate != None:
@@ -332,7 +323,7 @@ def createDateButtons(startX, startY, currentDate, offset):
         y = startY
         for i in range(0, 8):
             nextDate = currentDate + timedelta(days=i+offset)
-            dateButtonsList.append(Button(x, y, 90, 50, nextDate))
+            dateButtonsList.append(DateButton(x, y, 90, 50, nextDate))
             x += 95
             if x == 1190:
                 x = startX
@@ -342,7 +333,11 @@ def createDateButtons(startX, startY, currentDate, offset):
         x = startX
         y = startY
         for i in range(7):
-            dateButtonsList.append(Button(x, y, 90, 50, dayList[i]))
+            dateButtonsList.append(DateButton(x, y, 90, 50, dayList[i]))
+            x += 95
+            if x == 1190:
+                x = startX
+                y += 55
     return dateButtonsList
 
 def drawMultipleEventsMenu(deadline, hours, minutes, currentDate, buttonNum, deadlineFill, plusOpacity, minusOpacity):
@@ -513,7 +508,6 @@ def drawCalendarEvents(app):
                     drawRect(xCoord, 156, 170, endY-156, fill=rgb(r, g, b))
                 elif startY != 0 and endY != 0:
                     drawRect(xCoord, startY, 170, endY-startY, fill=rgb(r, g, b))
-            
         xCoord += 170
 
 def findSplitTask(app, event):
@@ -563,6 +557,32 @@ def canAdd(app, startTime, duration, currDay):
     return True       
     
 class Button:
+
+    def __init__(self, x, y, width, height, value):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.value = value
+        self.opacity = 0
+        self.onButton = False
+
+    def checkForPress(self, mouseX, mouseY):
+        if self.x <= mouseX <= self.x+self.width and self.y <= mouseY <= self.y+self.height and self.value == False:
+            self.value = True
+
+    def checkForCheckboxPress(self, mouseX, mouseY):
+        if self.x <= mouseX <= self.x+self.width and self.y <= mouseY <= self.y+self.height:
+            self.value = not self.value
+            app.selectedDate = None
+
+    def checkOnButton(self, mouseX, mouseY):
+        if self.x <= mouseX <= self.x+self.width and self.y <= mouseY <= self.y+self.height:
+            self.onButton = True
+        else:
+            self.onButton = False
+
+class DateButton:
 
     def __init__(self, x, y, width, height, value):
         self.x = x

@@ -45,7 +45,8 @@ def getTotalTime(app, day):
         if day == singleEventTasks.date:
             minuteCount += (singleEventTasks.endTime - singleEventTasks.startTime).seconds/60
     for keys in app.splitTaskWorkSessions:
-        for (startTime, endTime) in app.splitTaskWorkSessions[keys]:
-            if day == startTime.date():
-                minuteCount += (endTime.minute - startTime.minute) + (endTime.hour - startTime.hour)*60
+        if app.splitTaskWorkSessions[keys] != None:
+            for (startTime, endTime) in app.splitTaskWorkSessions[keys]:
+                if day == startTime.date():
+                    minuteCount += (endTime.minute - startTime.minute) + (endTime.hour - startTime.hour)*60
     return (minuteCount//60, minuteCount%60)

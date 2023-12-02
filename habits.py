@@ -1,6 +1,7 @@
 from datetime import date, timedelta, datetime
 from cmu_graphics import*
 from PIL import Image
+from calendarScreen import*
 
 def drawHabits(app):
     drawLabel('Habits', 98, 39, size=35, align='left', font='DM Sans 36pt')
@@ -27,7 +28,20 @@ def drawHabitsPopUp(habitName, startTime, endTime, selectedDays, rect3Fill, rect
     drawRect(975, 121, 130, 40, fill=rect4Fill)
     drawLabel(endTime, 1040, 142, size=30, font='DM Sans')
     drawLabel('Days', 810, 189, align='left', size=25, font='DM Sans', fill=rgb(167, 173, 173))
-    drawDateButtons(810, 211, selectedDays)
+    drawDateButtons(app.habitsDayButtonList)
+
+def drawDateButtons(buttonList):
+    for buttons in buttonList:
+        if buttons.selected:
+            drawRect(buttons.x, buttons.y, buttons.width, buttons.height, fill=rgb(167, 173, 173), border=gradient(rgb(140, 82, 255), rgb(255, 145, 77), start='left'), borderWidth=4)
+        else:
+            drawRect(buttons.x, buttons.y, buttons.width, buttons.height, fill=rgb(167, 173, 173))
+        if isinstance(buttons.value, str):
+            label = buttons.value
+            drawLabel(label, buttons.x+45, buttons.y+25, fill='white', size=12, font='DM Sans')
+        else:
+            label = str(buttons.value.month) + '/' + str(buttons.value.day)
+            drawLabel(label, buttons.x+45, buttons.y+25, fill='white', size=15, font='DM Sans')
 
 def checkHabitStartEndTimePresses(app, mouseX, mouseY):
     if 806 <= mouseX <= 936 and 121 <= mouseY <= 161:
@@ -39,21 +53,6 @@ def checkHabitStartEndTimePresses(app, mouseX, mouseY):
     else:
         app.rect4TextField = False
 
-def drawDateButtons(startX, startY, selectedDays):
-    x = startX
-    y = startY
-    dayList = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-    for days in dayList:
-        if days in selectedDays:
-            drawRect(x, y, 90, 50, fill=rgb(167, 173, 173), border=gradient(rgb(140, 82, 255), rgb(255, 145, 77), start='left'), borderWidth=4)
-        else:
-            drawRect(x, y, 90, 50, fill=rgb(167, 173, 173))
-        drawLabel(days, x+45, y+25, fill='white', size=14, font='DM Sans')
-        x += 95
-        if x == 1190:
-            x = startX
-            y += 55
-
 def isLegalHabitTime(app):
     startTime = app.habitStartTime.replace('|', '')
     endTime = app.habitEndTime.replace('|', '')
@@ -62,18 +61,6 @@ def isLegalHabitTime(app):
     endTime = datetime.strptime(endTime,'%I:%M%p')
     ####################################################################################
     return startTime.time() < endTime.time()
-
-def checkMultiDayButtonPresses(app, mouseX, mouseY, coords):
-    days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-    buttonValue = 0
-    for (x, y) in coords:
-        if x <= mouseX <= x+90:
-            if y <= mouseY <= y+50:
-                if days[buttonValue] not in app.selectedHabitDays:
-                    app.selectedHabitDays.add(days[buttonValue])
-                else:
-                    app.selectedHabitDays.remove(days[buttonValue])
-        buttonValue += 1
 
 class Habit:
 
