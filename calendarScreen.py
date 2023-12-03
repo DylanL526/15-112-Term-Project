@@ -106,8 +106,8 @@ def drawCheckBox(boxChecked):
     else:
         drawRect(810, 95, 20, 20, fill=None, border=rgb(217, 217, 217))
 
-def drawSingleEventMenu(startTime, endTime, currentDate, buttonNum, rect1Fill, rect2Fill):
-    drawRect(810, 135, 130, 40, fill=rect1Fill)
+def drawSingleEventMenu(startTime, endTime, startTimeFill, rect2Fill):
+    drawRect(810, 135, 130, 40, fill=startTimeFill)
     drawLabel(startTime, 875, 155, size=30, font='DM Sans')
     drawLabel('to', 960, 155, size=30, fill=rgb(167, 173, 173), font='DM Sans')
     drawRect(980, 135, 130, 40, fill=rect2Fill)
@@ -135,79 +135,86 @@ def checkDayButtonPresses(mouseX, mouseY, buttonList):
         if noneCount == 8:
             app.selectedDate = None
 
-def checkStartEndTimePresses(app, mouseX, mouseY):
-    if 810 <= mouseX <= 940:
-        if 135 <= mouseY <= 175:
-            app.rect1TextField = True
-        else:
-            app.rect1TextField = False
-    else:
-        app.rect1TextField = False
-    if 980 <= mouseX <= 1115:
-        if 135 <= mouseY <= 175:
-            app.rect2TextField = True
-        else:
-            app.rect2TextField = False
-    else:
-        app.rect2TextField = False
-
 def checkTextFieldLegality(app):
-    if '|' in app.startTime:
+    if '|' in app.startTime.value:
         timeFormat = '%I:%M%p|'
     else:
         timeFormat = '%I:%M%p'
     ##### Code from https://stackoverflow.com/questions/33076617/how-to-validate-time-format #####
     try:
-        currentTime = datetime.strptime(app.startTime, timeFormat)
+        currentTime = datetime.strptime(app.startTime.value, timeFormat)
+        app.startTime.legal = True
     except ValueError:
-        app.rect1Fill = rgb(255, 204, 203)
+        app.startTime.legal = False
     ##############################################################################################
-    if '|' in app.endTime:
+    if app.startTime.legal == False:
+        app.startTime.fill = rgb(255, 204, 203)
+    elif app.startTime.legal and app.startTime.inTextField:
+        app.startTime.fill = rgb(238, 241, 247)
+    if '|' in app.endTime.value:
         timeFormat = '%I:%M%p|'
     else:
         timeFormat = '%I:%M%p'
     ##### Code from https://stackoverflow.com/questions/33076617/how-to-validate-time-format #####
     try:
-        currentTime = datetime.strptime(app.endTime, timeFormat)
+        currentTime = datetime.strptime(app.endTime.value, timeFormat)
+        app.endTime.legal = True
     except ValueError:
-        app.rect2Fill = rgb(255, 204, 203)
+        app.endTime.legal = False
     ##############################################################################################
-    if '|' in app.habitStartTime:
+    if app.endTime.legal == False:
+        app.endTime.fill = rgb(255, 204, 203)
+    elif app.endTime.legal and app.endTime.inTextField:
+        app.endTime.fill = rgb(238, 241, 247)
+    if '|' in app.habitStartTime.value:
         timeFormat = '%I:%M%p|'
     else:
         timeFormat = '%I:%M%p'
     ##### Code from https://stackoverflow.com/questions/33076617/how-to-validate-time-format #####
     try:
-        currentTime = datetime.strptime(app.habitStartTime, timeFormat)
+        currentTime = datetime.strptime(app.habitStartTime.value, timeFormat)
+        app.habitStartTime.legal = True
     except ValueError:
-        app.rect3Fill = rgb(255, 204, 203)
+        app.habitStartTime.legal = False
     ##############################################################################################
-    if '|' in app.habitEndTime:
+    if app.habitStartTime.legal == False:
+        app.habitStartTime.fill = rgb(255, 204, 203)
+    elif app.habitStartTime.legal and app.habitStartTime.inTextField:
+        app.habitStartTime.fill = rgb(238, 241, 247)
+    if '|' in app.habitEndTime.value:
         timeFormat = '%I:%M%p|'
     else:
         timeFormat = '%I:%M%p'
     ##### Code from https://stackoverflow.com/questions/33076617/how-to-validate-time-format #####
     try:
-        currentTime = datetime.strptime(app.habitEndTime, timeFormat)
+        currentTime = datetime.strptime(app.habitEndTime.value, timeFormat)
+        app.habitEndTime.legal = True
     except ValueError:
-        app.rect4Fill = rgb(255, 204, 203)
+        app.habitEndTime.legal = False
     ##############################################################################################
+    if app.habitEndTime.legal == False:
+        app.habitEndTime.fill = rgb(255, 204, 203)
+    elif app.habitEndTime.legal and app.habitEndTime.inTextField:
+        app.habitEndTime.fill = rgb(238, 241, 247)
+    if '|' in app.deadline.value:
+        timeFormat = '%I:%M%p|'
+    else:
+        timeFormat = '%I:%M%p'
+    ##### Code from https://stackoverflow.com/questions/33076617/how-to-validate-time-format #####
+    try:
+        currentTime = datetime.strptime(app.deadline.value, timeFormat)
+        app.deadline.legal = True
+    except ValueError:
+        app.deadline.legal = False
+    ##############################################################################################
+    if app.deadline.legal == False:
+        app.deadline.fill = rgb(255, 204, 203)
+    elif app.deadline.legal and app.deadline.inTextField:
+        app.deadline.fill = rgb(238, 241, 247)
 
-def checkDeadlineLegality(app):
-    if '|' in app.deadline:
-        timeFormat = '%I:%M%p|'
-    else:
-        timeFormat = '%I:%M%p'
-    ##### Code from https://stackoverflow.com/questions/33076617/how-to-validate-time-format #####
-    try:
-        currentTime = datetime.strptime(app.deadline, timeFormat)
-    except ValueError:
-        app.deadlineFill = rgb(255, 204, 203)
-    ##############################################################################################
-
-def isLegalTime(app):
-    startTime = app.startTime.replace('|', '')
-    endTime = app.endTime.replace('|', '')
+def isLegalTime(startTime, endTime):
+    startTime = startTime.replace('|', '')
+    endTime = endTime.replace('|', '')
     ### strptime from https://www.programiz.com/python-programming/datetime/strptime ###
     startTime = datetime.strptime(startTime, '%I:%M%p')
     endTime = datetime.strptime(endTime,'%I:%M%p')
@@ -218,17 +225,6 @@ def isLegalTime(app):
         return False
     else:
         return startTime.time() < endTime.time()
-    
-def isLegalDeadline(app):
-    if app.selectedDate == app.currentDate:
-        time = app.deadline.replace('|', '')
-        ### strptime from https://www.programiz.com/python-programming/datetime/strptime ###
-        deadlineTime = datetime.strptime(time, '%I:%M%p')
-        ####################################################################################
-        if (deadlineTime-timedelta(hours=app.durationHours, minutes=app.durationMinutes)).time() <= app.currentTime.time():
-            app.deadlineFill = rgb(255, 204, 203)
-            return False
-    return True
 
 def checkInTextField(app):
     if app.taskNameTextField.inTextField:
@@ -253,68 +249,63 @@ def checkInTextField(app):
         if 8 <= app.habitsNameTextField.timer <= 15 and '|' in app.habitsNameTextField.value:
             app.habitsNameTextField.value = app.habitsNameTextField.value[:-1]
             app.habitsNameTextField.timer = 0
-    if app.rect3TextField:
-        app.rect3Fill = rgb(238, 241, 247)
-        if app.cursorTimer == 8 and (app.habitStartTime == '' or app.habitStartTime[-1] != '|'):
-            app.habitStartTime += "|"
-        app.cursorTimer += 1
-        if app.cursorTimer == 16:
-            app.cursorTimer = 0
-            app.habitStartTime = app.habitStartTime.replace('|', '')
+    if app.habitStartTime.inTextField:
+        if app.habitStartTime.timer == 8 and (app.habitStartTime.value == '' or app.habitStartTime.value[-1] != '|'):
+            app.habitStartTime.value += "|"
+        app.habitStartTime.timer += 1
+        if app.habitStartTime.timer == 16:
+            app.habitStartTime.timer = 0
+            app.habitStartTime.value = app.habitStartTime.value.replace('|', '')
     else:
-        if app.habitStartTime != '' and app.habitStartTime[-1] == '|':
-            app.habitStartTime = app.habitStartTime[:-1]
-            app.cursorTimer = 0
-    if app.rect4TextField:
-        app.rect4Fill = rgb(238, 241, 247)
-        if app.cursorTimer == 8 and (app.habitEndTime == '' or app.habitEndTime[-1] != '|'):
-            app.habitEndTime += "|"
-        app.cursorTimer += 1
-        if app.cursorTimer == 16:
-            app.cursorTimer = 0
-            app.habitEndTime = app.habitEndTime.replace('|', '')
+        if app.habitStartTime.value != '' and app.habitStartTime.value[-1] == '|':
+            app.habitStartTime.value = app.habitStartTime.value[:-1]
+            app.habitStartTime.timer = 0
+    if app.habitEndTime.inTextField:
+        if app.habitEndTime.timer == 8 and (app.habitEndTime.value == '' or app.habitEndTime.value[-1] != '|'):
+            app.habitEndTime.value += "|"
+        app.habitEndTime.timer += 1
+        if app.habitEndTime.timer == 16:
+            app.habitEndTime.timer = 0
+            app.habitEndTime.value = app.habitEndTime.value.replace('|', '')
     else:
-        if app.habitEndTime != '' and app.habitEndTime[-1] == '|':
-            app.habitEndTime = app.habitEndTime[:-1]
-            app.cursorTimer = 0
+        if app.habitEndTime.value != '' and app.habitEndTime.value[-1] == '|':
+            app.habitEndTime.value = app.habitEndTime.value[:-1]
+            app.habitEndTime.timer = 0
     if app.singleEventButton.value:
-        if app.rect1TextField:
-            app.rect1Fill = rgb(238, 241, 247)
-            if app.cursorTimer == 8 and (app.startTime == '' or app.startTime[-1] != '|'):
-                app.startTime += "|"
-            app.cursorTimer += 1
-            if app.cursorTimer == 16:
-                app.cursorTimer = 0
-                app.startTime = app.startTime.replace('|', '')
+        if app.startTime.inTextField:
+            if app.startTime.timer == 8 and (app.startTime.value == '' or app.startTime.value[-1] != '|'):
+                app.startTime.value += "|"
+            app.startTime.timer += 1
+            if app.startTime.timer == 16:
+                app.startTime.timer = 0
+                app.startTime.value = app.startTime.value.replace('|', '')
         else:
-            if app.startTime != '' and app.startTime[-1] == '|':
-                app.startTime = app.startTime[:-1]
-                app.cursorTimer = 0
-        if app.rect2TextField:
-            app.rect2Fill = rgb(238, 241, 247)
-            if app.cursorTimer == 8 and (app.endTime == '' or app.endTime[-1] != '|'):
-                app.endTime += "|"
-            app.cursorTimer += 1
-            if app.cursorTimer == 16:
-                app.cursorTimer = 0
-                app.endTime = app.endTime.replace('|', '')
+            if app.startTime.value != '' and app.startTime.value[-1] == '|':
+                app.startTime.value = app.startTime.value[:-1]
+                app.startTime.timer = 0
+        if app.endTime.inTextField:
+            if app.endTime.timer == 8 and (app.endTime.value == '' or app.endTime.value[-1] != '|'):
+                app.endTime.value += "|"
+            app.endTime.timer += 1
+            if app.endTime.timer == 16:
+                app.endTime.timer = 0
+                app.endTime.value = app.endTime.value.replace('|', '')
         else:
-            if app.endTime != '' and app.endTime[-1] == '|':
-                app.cursorTimer = 0
-                app.endTime = app.endTime[:-1]
+            if app.endTime.value != '' and app.endTime.value[-1] == '|':
+                app.endTime.timer = 0
+                app.endTime.value = app.endTime.value[:-1]
     else:
-        if app.deadlineTextField:
-            app.deadlineFill = rgb(238, 241, 247)
-            if app.cursorTimer == 8 and (app.deadline == '' or app.deadline[-1] != '|'):
-                app.deadline += '|'
-            app.cursorTimer += 1
-            if app.cursorTimer == 16:
-                app.cursorTimer = 0
-                app.deadline = app.deadline.replace('|', '')
+        if app.deadline.inTextField:
+            if app.deadline.timer == 8 and (app.deadline.value == '' or app.deadline.value[-1] != '|'):
+                app.deadline.value += '|'
+            app.deadline.timer += 1
+            if app.deadline.timer == 16:
+                app.deadline.timer = 0
+                app.deadline.value = app.deadline.value.replace('|', '')
         else:
-            if app.deadline != '' and app.deadline[-1] == '|':
-                app.cursorTimer = 0
-                app.deadline = app.deadline[:-1]
+            if app.deadline.value != '' and app.deadline.value[-1] == '|':
+                app.deadline.timer = 0
+                app.deadline.value = app.deadline.value[:-1]
 
 def createDateButtons(startX, startY, currentDate, offset):
     dateButtonsList = []
@@ -340,7 +331,7 @@ def createDateButtons(startX, startY, currentDate, offset):
                 y += 55
     return dateButtonsList
 
-def drawMultipleEventsMenu(deadline, hours, minutes, currentDate, buttonNum, deadlineFill, plusOpacity, minusOpacity):
+def drawMultipleEventsMenu(deadline, hours, minutes, deadlineFill, plusOpacity, minusOpacity):
     drawLabel('Duration', 810, 142, fill=rgb(167, 173, 173), size=25, align='left', font='DM Sans')
     drawRect(1000, 142, 163, 30, fill=None, border=rgb(217, 217, 217), align='center')
     plus = Image.open('Images/add.png') # Icon from https://www.flaticon.com/free-icon/subtraction_4230191?term=minus&page=1&position=36&origin=search&related_id=4230191
@@ -360,12 +351,6 @@ def drawMultipleEventsMenu(deadline, hours, minutes, currentDate, buttonNum, dea
     drawRect(973, 185, 110, 35, align='center', fill=deadlineFill)
     drawLabel(deadline, 973, 185, align='center', size=25, font='DM Sans')
     drawLabel('on', 1035, 188, align='left', fill=rgb(167, 173, 173), size=25, font='DM Sans')
-
-def checkDeadlinePress(app, mouseX, mouseY):
-    if 918 <= mouseX <= 1028 and 168 <= mouseY <= 202:
-        app.deadlineTextField = True
-    else:
-        app.deadlineTextField = False
 
 def checkDurationPress(app, mouseX, mouseY):
     if 918 <= mouseX <= 1068 and 127 <= mouseY <= 157:
@@ -585,6 +570,39 @@ class TaskNameTextField:
             self.value = self.value.replace('|', '')
             self.inTextField = False
 
+class TimeTextField:
+
+    def __init__(self, x, y, width, height, value, fill, inTextField):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.value = value
+        self.fill = fill
+        self.inTextField = inTextField
+        self.timer = 0
+        self.legal = True
+
+    def addToField(self, key):
+        self.value = self.value[:-1] + key + '|'
+
+    def removeFromField(self):
+        self.value = self.value[:-2] + '|'
+
+    def checkForPress(self, mouseX, mouseY):
+        if self.x <= mouseX <= self.x+self.width and self.y <= mouseY <= self.y+self.height:
+            self.timer = 8
+            self.inTextField = True
+        else:
+            self.timer = 0
+            self.value = self.value.replace('|', '')
+            self.inTextField = False
+
+    def checkHoveringOver(self, mouseX, mouseY):
+        if self.x <= mouseX <= self.x+self.width and self.y <= mouseY <= self.y+self.height and self.legal:
+            self.fill = rgb(238, 241, 247)
+        elif self.legal:
+            self.fill = 'white'
 
 class Button:
 

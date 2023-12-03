@@ -1,2 +1,2 @@
 name, days, startTime, endTime
-Dinner,"{'Thursday', 'Monday', 'Wednesday', 'Tuesday', 'Friday'}",1900-01-01 18:00:00,1900-01-01 18:30:00
+Dinner,"{'Friday', 'Wednesday', 'Monday', 'Tuesday', 'Thursday'}",1900-01-01 12:00:00,1900-01-01 12:10:00
