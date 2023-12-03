@@ -1,3 +1,2 @@
 name, days, startTime, endTime
-Gym,"{'Wednesday', 'Tuesday', 'Friday', 'Thursday', 'Monday'}",1900-01-01 12:00:00,1900-01-01 13:00:00
-Dinner|,"{'Friday', 'Sunday', 'Wednesday', 'Thursday', 'Saturday', 'Tuesday', 'Monday'}",1900-01-01 21:00:00,1900-01-01 22:00:00
+Dinner,"{'Thursday', 'Monday', 'Wednesday', 'Tuesday', 'Friday'}",1900-01-01 18:00:00,1900-01-01 18:30:00

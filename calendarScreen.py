@@ -231,28 +231,28 @@ def isLegalDeadline(app):
     return True
 
 def checkInTextField(app):
-    if app.taskNameTextField:
-        if app.cursorTimer == 8 and (app.taskName == '' or app.taskName[-1] != '|'):
-            app.taskName += '|'
-        app.cursorTimer += 1
-        if app.cursorTimer == 16:
-            app.cursorTimer = 0
-            app.taskName = app.taskName.replace('|', '')
+    if app.taskNameTextField.inTextField:
+        if app.taskNameTextField.timer == 8 and (app.taskNameTextField.value == '' or app.taskNameTextField.value[-1] != '|'):
+            app.taskNameTextField.value += '|'
+        app.taskNameTextField.timer += 1
+        if app.taskNameTextField.timer == 16:
+            app.taskNameTextField.timer = 0
+            app.taskNameTextField.value = app.taskNameTextField.value.replace('|', '')
     else:
-        if 8 <= app.cursorTimer <= 15 and '|' in app.taskName:
-            app.taskName = app.taskName[:-1]
-            app.cursorTimer = 0
-    if app.habitsNameTextField:
-        if app.cursorTimer == 8 and (app.habitName == '' or app.habitName[-1] != '|'):
-            app.habitName += '|'
-        app.cursorTimer += 1
-        if app.cursorTimer == 16:
-            app.cursorTimer = 0
-            app.habitName = app.habitName.replace('|', '')
+        if 8 <= app.taskNameTextField.timer <= 15 and '|' in app.taskNameTextField.value:
+            app.taskNameTextField.value = app.taskNameTextField.value[:-1]
+            app.taskNameTextField.timer = 0
+    if app.habitsNameTextField.inTextField:
+        if app.habitsNameTextField.timer == 8 and (app.habitsNameTextField.value == '' or app.habitsNameTextField.value[-1] != '|'):
+            app.habitsNameTextField.value += '|'
+        app.habitsNameTextField.timer += 1
+        if app.habitsNameTextField.timer == 16:
+            app.habitsNameTextField.timer = 0
+            app.habitsNameTextField.value = app.habitsNameTextField.value.replace('|', '')
     else:
-        if 8 <= app.cursorTimer <= 15 and '|' in app.habitName:
-            app.habitName = app.habitName[:-1]
-            app.cursorTimer = 0
+        if 8 <= app.habitsNameTextField.timer <= 15 and '|' in app.habitsNameTextField.value:
+            app.habitsNameTextField.value = app.habitsNameTextField.value[:-1]
+            app.habitsNameTextField.timer = 0
     if app.rect3TextField:
         app.rect3Fill = rgb(238, 241, 247)
         if app.cursorTimer == 8 and (app.habitStartTime == '' or app.habitStartTime[-1] != '|'):
@@ -498,7 +498,10 @@ def drawCalendarEvents(app):
                     if startY != 0 and endY != 0:
                         break
                     yCoord += 78
-                colors = event.fill.split(',')
+                if '|' in event.fill:
+                    colors = event.fill.split('|')
+                else:
+                    colors = event.fill.split(',')
                 r = int(colors[0])
                 g = int(colors[1])
                 b = int(colors[2])
@@ -556,6 +559,33 @@ def canAdd(app, startTime, duration, currDay):
                 return False
     return True       
     
+class TaskNameTextField:
+
+    def __init__(self, x, y, width, height, value, inTextField):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.value = value
+        self.inTextField = inTextField
+        self.timer = 0
+
+    def addToField(self, key):
+        self.value = self.value[:-1] + key + '|'
+
+    def removeFromField(self):
+        self.value = self.value[:-2] + '|'
+
+    def checkForPress(self, mouseX, mouseY):
+        if self.x <= mouseX <= self.x+self.width and self.y <= mouseY <= self.y+self.height:
+            self.timer = 8
+            self.inTextField = True
+        else:
+            self.timer = 0
+            self.value = self.value.replace('|', '')
+            self.inTextField = False
+
+
 class Button:
 
     def __init__(self, x, y, width, height, value):
@@ -568,7 +598,14 @@ class Button:
         self.onButton = False
 
     def checkForPress(self, mouseX, mouseY):
+        if self.x <= mouseX <= self.x+self.width and self.y <= mouseY <= self.y+self.height:
+            self.value = True
+
+    def checkForMenuButtonPress(self, mouseX, mouseY):
         if self.x <= mouseX <= self.x+self.width and self.y <= mouseY <= self.y+self.height and self.value == False:
+            for buttons in app.taskBarButtons:
+                if buttons.value == True:
+                    buttons.value = False
             self.value = True
 
     def checkForCheckboxPress(self, mouseX, mouseY):
