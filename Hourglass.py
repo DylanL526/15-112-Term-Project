@@ -7,6 +7,7 @@ from stats import*
 from PIL import Image
 import csv
 import random
+import copy
 
 def onAppStart(app):
     app.background = rgb(246, 248, 252)
@@ -25,11 +26,13 @@ def onAppStart(app):
     app.taskBarButtons = [Button(0, 78, 78, 78, True), Button(0, 156, 78, 78, False), Button(0, 234, 78, 78, False), Button(0, 312, 78, 78, False)]
     app.colorPalette = ["251| 194| 194|", "203| 120| 118", "180| 207| 164", "98| 134| 108", "244| 211| 94",
                         "246| 123| 69", "100| 85| 123", "187| 166| 221", "160| 197| 227", "50| 118| 155"] # Colors sourced from https://i.pinimg.com/736x/af/34/ec/af34ec62e403206b0c9fce24051f9160.jpg
+    app.colorPaletteCopy = copy.copy(app.colorPalette)
 
     ### General Pop-Up Variables ###
     app.cancelButton = Button(1020, 355, 60, 20, False)
     app.scheduleButton = Button(1095, 344, 98, 40, False)
     app.selectedDate = None
+    app.textFields = []
 
     ### Single/Split Event Pop-Up Variables ###
     app.taskPopUp = Button(1224, 13, 128, 52, False)
@@ -44,6 +47,10 @@ def onAppStart(app):
     app.deadline = TimeTextField(918, 168, 110, 34, '12:00pm', 'white', False)
     app.durationMinutes = 15
     app.durationHours = 0
+    app.textFields.append(app.endTime)
+    app.textFields.append(app.startTime)
+    app.textFields.append(app.deadline)
+    app.textFields.append(app.taskNameTextField)
 
     ### Habit Pop-Up Variables ###
     app.habitsPopUp = Button(1224, 13, 128, 52, False)
@@ -52,9 +59,13 @@ def onAppStart(app):
     app.habitsDayButtonList = createDateButtons(810, 211, None, 0)
     app.habitStartTime = TimeTextField(806, 121, 130, 40, '12:00pm', 'white', False)
     app.habitEndTime = TimeTextField(975, 121, 130, 40, '12:00am', 'white', False)
+    app.textFields.append(app.habitStartTime)
+    app.textFields.append(app.habitEndTime)
+    app.textFields.append(app.habitsNameTextField)
 
     ### Single Event Variables ###
     app.singleEventTasks = importSingleEventData()
+    app.tasksIndex = 0
 
     ### Split Event Variables ###
     app.splitTasks = importSplitEventData()
@@ -62,6 +73,7 @@ def onAppStart(app):
 
     ### Habit Variables ###
     app.habitsSet = importHabitData()
+    app.habitsIndex = 0
 
     ### Functions to be called ###
     generateWorkSessions(app)
@@ -133,7 +145,7 @@ def redrawAll(app):
     elif app.taskBarButtons[2].value:
         drawHabits(app)
         if app.habitsPopUp.value:
-            drawHabitsPopUp(app.habitsNameTextField.value, app.habitStartTime.value, app.habitEndTime.value, app.selectedHabitDays, app.habitStartTime.fill, app.habitEndTime.fill)
+            drawHabitsPopUp(app.habitsNameTextField.value, app.habitStartTime.value, app.habitEndTime.value, app.habitStartTime.fill, app.habitEndTime.fill)
     elif app.taskBarButtons[3].value:
         drawStats(app)
 
@@ -153,31 +165,35 @@ def onMousePress(app, mouseX, mouseY):
         app.endTime.checkForPress(mouseX, mouseY)
     elif app.taskPopUp.value:
         app.deadline.checkForPress(mouseX, mouseY)
-        checkDurationPress(app, mouseX, mouseY)
         checkPlusMinusButtons(app, mouseX, mouseY)
         checkDayButtonPresses(mouseX, mouseY, app.splitEventDayButtonList)
     elif app.habitsPopUp.value:
-        checkHabitStartEndTimePresses(app, mouseX, mouseY)
+        app.habitStartTime.checkForPress(mouseX, mouseY)
+        app.habitEndTime.checkForPress(mouseX, mouseY)
         checkDayButtonPresses(mouseX, mouseY, app.habitsDayButtonList)
 
 def onKeyPress(app, key):
     if app.taskPopUp.value == False:
-        if key == 'right':
+        if key == 'right' and app.taskBarButtons[0].value:
             app.timeDelta += 7
             app.weeklyDateList = getDatesList(app.currentDate + timedelta(days=app.timeDelta))
-            generateWeeklyEvents(app)
             generateWorkSessions(app)
-        elif key == 'left':
+            generateWeeklyEvents(app)
+        elif key == 'left' and app.taskBarButtons[0].value:
             app.timeDelta -= 7
             app.weeklyDateList = getDatesList(app.currentDate + timedelta(days=app.timeDelta))
-            generateWeeklyEvents(app)
             generateWorkSessions(app)
-        elif key == 'up' and app.index > 0:
+            generateWeeklyEvents(app)
+        elif key == 'up' and app.index > 0 and app.taskBarButtons[0].value:
             app.index -= 1
             getShownTimes(app)
-        elif key == 'down' and app.index < 16:
+        elif key == 'down' and app.index < 16 and app.taskBarButtons[0].value:
             app.index += 1
             getShownTimes(app)
+        elif key == 'down' and app.habitsIndex < len(app.habitsSet)-7 and app.taskBarButtons[2].value:
+            app.habitsIndex += 1
+        elif key == 'up' and app.habitsIndex > 0 and app.taskBarButtons[2].value:
+            app.habitsIndex -= 1
     elif app.taskNameTextField.inTextField:
         app.taskNameTextField.timer = 0
         app.taskNameTextField.value = app.taskNameTextField.value.replace('|', '') + '|'
@@ -305,6 +321,16 @@ def checkPlusMinusButtons(app, mouseX, mouseY):
             app.durationHours += 1
             app.durationMinutes = 0
 
+def getRandomColor(app):
+    if app.colorPaletteCopy != []:
+        fill = app.colorPaletteCopy[random.randrange(len(app.colorPaletteCopy))]
+        app.colorPaletteCopy.remove(fill)
+    else:
+        app.colorPaletteCopy = copy.copy(app.colorPalette)
+        fill = app.colorPaletteCopy[random.randrange(len(app.colorPaletteCopy))]
+        app.colorPaletteCopy.remove(fill)
+    return fill
+
 def checkButtonPress(app, mouseX, mouseY):
     for buttons in app.taskBarButtons:
         buttons.checkForMenuButtonPress(mouseX, mouseY)
@@ -337,7 +363,7 @@ def checkButtonPress(app, mouseX, mouseY):
                 app.cancelButton.value = False
                 app.startTime.value = app.startTime.value.replace('|', '')
                 app.endTime.value = app.endTime.value.replace('|', '')
-                fill = app.colorPalette[random.randrange(10)]
+                fill = getRandomColor(app)
                 app.singleEventTasks.add(SingleEvent(datetime.strptime(app.startTime.value, '%I:%M%p'), datetime.strptime(app.endTime.value, '%I:%M%p'), app.selectedDate, app.taskNameTextField.value, fill))
                 writeSingleEventData(datetime.strptime(app.startTime.value, '%I:%M%p'), datetime.strptime(app.endTime.value, '%I:%M%p'), app.selectedDate, app.taskNameTextField.value, fill)
                 app.selectedDate = None
@@ -368,7 +394,7 @@ def checkButtonPress(app, mouseX, mouseY):
         elif app.selectedDate != None and app.deadline.fill != rgb(255, 204, 203) and 'Task name' not in app.taskNameTextField.value:
             app.scheduleButton.checkForPress(mouseX, mouseY)
             if app.scheduleButton.value:
-                fill = app.colorPalette[random.randrange(10)]
+                fill = getRandomColor(app)
                 app.scheduleButton.value = False
                 app.splitTasks.add(SplitEvent(app.deadline.value, app.durationMinutes, app.durationHours, app.selectedDate, app.taskNameTextField.value, fill))
                 writeSplitEventData(app.deadline.value, app.durationMinutes, app.durationHours, app.selectedDate, app.taskNameTextField.value, fill)
