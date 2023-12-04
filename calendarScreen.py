@@ -26,7 +26,6 @@ def drawCalendar(app, currentDate, dateList):
     drawLabel('New Task', 1298, 39, size=19, align='center', font='DM Sans 36pt')
     drawLabel('+', 1243, 41, size=28, font='DM Sans 36pt')
     drawTimes(app)
-    generateWorkSessions(app)
 
 def getDatesList(date):
     datesList = [date]
@@ -59,7 +58,7 @@ def getShownTimes(app):
         currentTime = datetime.strptime(app.times[i], timeFormat)
         app.shownTimes.append(currentTime)
 
-def getFormattedTimes(app, currDay):
+def getFormattedTimes(currDay):
     timeFormat = '%I:%M%p'
     formattedTimes = []
     timesList = ['7:00am', '7:15am', '7:30am', '7:45am', 
@@ -227,86 +226,19 @@ def isLegalTime(startTime, endTime):
         return startTime.time() < endTime.time()
 
 def checkInTextField(app):
-    if app.taskNameTextField.inTextField:
-        if app.taskNameTextField.timer == 8 and (app.taskNameTextField.value == '' or app.taskNameTextField.value[-1] != '|'):
-            app.taskNameTextField.value += '|'
-        app.taskNameTextField.timer += 1
-        if app.taskNameTextField.timer == 16:
-            app.taskNameTextField.timer = 0
-            app.taskNameTextField.value = app.taskNameTextField.value.replace('|', '')
-    else:
-        if 8 <= app.taskNameTextField.timer <= 15 and '|' in app.taskNameTextField.value:
-            app.taskNameTextField.value = app.taskNameTextField.value[:-1]
-            app.taskNameTextField.timer = 0
-    if app.habitsNameTextField.inTextField:
-        if app.habitsNameTextField.timer == 8 and (app.habitsNameTextField.value == '' or app.habitsNameTextField.value[-1] != '|'):
-            app.habitsNameTextField.value += '|'
-        app.habitsNameTextField.timer += 1
-        if app.habitsNameTextField.timer == 16:
-            app.habitsNameTextField.timer = 0
-            app.habitsNameTextField.value = app.habitsNameTextField.value.replace('|', '')
-    else:
-        if 8 <= app.habitsNameTextField.timer <= 15 and '|' in app.habitsNameTextField.value:
-            app.habitsNameTextField.value = app.habitsNameTextField.value[:-1]
-            app.habitsNameTextField.timer = 0
-    if app.habitStartTime.inTextField:
-        if app.habitStartTime.timer == 8 and (app.habitStartTime.value == '' or app.habitStartTime.value[-1] != '|'):
-            app.habitStartTime.value += "|"
-        app.habitStartTime.timer += 1
-        if app.habitStartTime.timer == 16:
-            app.habitStartTime.timer = 0
-            app.habitStartTime.value = app.habitStartTime.value.replace('|', '')
-    else:
-        if app.habitStartTime.value != '' and app.habitStartTime.value[-1] == '|':
-            app.habitStartTime.value = app.habitStartTime.value[:-1]
-            app.habitStartTime.timer = 0
-    if app.habitEndTime.inTextField:
-        if app.habitEndTime.timer == 8 and (app.habitEndTime.value == '' or app.habitEndTime.value[-1] != '|'):
-            app.habitEndTime.value += "|"
-        app.habitEndTime.timer += 1
-        if app.habitEndTime.timer == 16:
-            app.habitEndTime.timer = 0
-            app.habitEndTime.value = app.habitEndTime.value.replace('|', '')
-    else:
-        if app.habitEndTime.value != '' and app.habitEndTime.value[-1] == '|':
-            app.habitEndTime.value = app.habitEndTime.value[:-1]
-            app.habitEndTime.timer = 0
-    if app.singleEventButton.value:
-        if app.startTime.inTextField:
-            if app.startTime.timer == 8 and (app.startTime.value == '' or app.startTime.value[-1] != '|'):
-                app.startTime.value += "|"
-            app.startTime.timer += 1
-            if app.startTime.timer == 16:
-                app.startTime.timer = 0
-                app.startTime.value = app.startTime.value.replace('|', '')
+    for textFields in app.textFields:
+        if textFields.inTextField:
+            if textFields.timer == 8 and (textFields.value == '' or textFields.value[-1] != '|'):
+                textFields.value += '|'
+            textFields.timer += 1
+            if textFields.timer == 16:
+                textFields.timer = 0
+                textFields.value = textFields.value.replace('|', '')
         else:
-            if app.startTime.value != '' and app.startTime.value[-1] == '|':
-                app.startTime.value = app.startTime.value[:-1]
-                app.startTime.timer = 0
-        if app.endTime.inTextField:
-            if app.endTime.timer == 8 and (app.endTime.value == '' or app.endTime.value[-1] != '|'):
-                app.endTime.value += "|"
-            app.endTime.timer += 1
-            if app.endTime.timer == 16:
-                app.endTime.timer = 0
-                app.endTime.value = app.endTime.value.replace('|', '')
-        else:
-            if app.endTime.value != '' and app.endTime.value[-1] == '|':
-                app.endTime.timer = 0
-                app.endTime.value = app.endTime.value[:-1]
-    else:
-        if app.deadline.inTextField:
-            if app.deadline.timer == 8 and (app.deadline.value == '' or app.deadline.value[-1] != '|'):
-                app.deadline.value += '|'
-            app.deadline.timer += 1
-            if app.deadline.timer == 16:
-                app.deadline.timer = 0
-                app.deadline.value = app.deadline.value.replace('|', '')
-        else:
-            if app.deadline.value != '' and app.deadline.value[-1] == '|':
-                app.deadline.timer = 0
-                app.deadline.value = app.deadline.value[:-1]
-
+            if 8 <= textFields.timer <= 15 and '|' in textFields.value:
+                textFields.value = textFields.value[:-1]
+                textFields.timer = 0
+    
 def createDateButtons(startX, startY, currentDate, offset):
     dateButtonsList = []
     if currentDate != None:
@@ -351,12 +283,6 @@ def drawMultipleEventsMenu(deadline, hours, minutes, deadlineFill, plusOpacity, 
     drawRect(973, 185, 110, 35, align='center', fill=deadlineFill)
     drawLabel(deadline, 973, 185, align='center', size=25, font='DM Sans')
     drawLabel('on', 1035, 188, align='left', fill=rgb(167, 173, 173), size=25, font='DM Sans')
-
-def checkDurationPress(app, mouseX, mouseY):
-    if 918 <= mouseX <= 1068 and 127 <= mouseY <= 157:
-        app.durationTextField = True
-    else:
-        app.durationTextField = False
 
 def getCurrentDay(number):
     if number == 0:
@@ -411,10 +337,9 @@ def generateWeeklyEvents(app):
             if dates == singleEventTasks.date:
                 app.weeklyEvents[dates].append(singleEventTasks)
         for splitEventTasks in app.splitTaskWorkSessions:
-            if app.splitTaskWorkSessions[splitEventTasks] != None:
-                for (startTime, endTime) in app.splitTaskWorkSessions[splitEventTasks]:
-                    if dates == startTime.date():
-                        app.weeklyEvents[dates].append((startTime, endTime))
+            for (startTime, endTime) in app.splitTaskWorkSessions[splitEventTasks]:
+                if dates == startTime.date():
+                    app.weeklyEvents[dates].append((startTime, endTime))
 
 def getDailyEvents(app, currDay):
     dailyEvents = []
@@ -424,6 +349,10 @@ def getDailyEvents(app, currDay):
     for singleEventTasks in app.singleEventTasks:
         if currDay == singleEventTasks.date:
             dailyEvents.append(singleEventTasks)
+    for splitEventTasks in app.splitTaskWorkSessions:
+        for (startTime, endTime) in app.splitTaskWorkSessions[splitEventTasks]:
+            if currDay == startTime.date():
+                dailyEvents.append((startTime, endTime))
     return dailyEvents
 
 def drawCalendarEvents(app):
@@ -460,12 +389,165 @@ def drawCalendarEvents(app):
                     r = int(colors[0])
                     g = int(colors[1])
                     b = int(colors[2])
-                if startY != 0 and endY == 0 and startY != 780:
-                    drawRect(xCoord, startY, 170, 780-startY, fill=rgb(r, g, b))
-                elif startY == 0 and endY != 0 and endY != 156:
-                    drawRect(xCoord, 156, 170, endY-156, fill=rgb(r, g, b))
-                elif startY != 0 and endY != 0:
-                    drawRect(xCoord, startY, 170, endY-startY, fill=rgb(r, g, b))
+                    if startY != 0 and endY == 0 and startY != 780:
+                        if 780-startY < 30:
+                            if 780-startY < 15:
+                                drawRect(xCoord, startY, 170, 15, fill=rgb(r, g, b))
+                            else:
+                                drawRect(xCoord, startY, 170, 780-startY, fill=rgb(r, g, b))
+                            drawLabel(splitTask.name, xCoord+5, startY+7.5, align='left', fill='white', font='DM Sans')
+                            if startTime.time().hour > 11:
+                                value = 'pm'
+                            else:
+                                value = 'am'
+                            if startTime.time().minute == 0:
+                                minute = '00'
+                            elif startTime.time().minute < 10:
+                                minute = '0' + str(startTime.time().minute)
+                            else:
+                                minute = str(startTime.time().minute)
+                            if startTime.time().hour == 12:
+                                hour = '12'
+                            else:
+                                hour = str((startTime.time().hour)%12)
+                            drawLabel(hour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
+                        else:
+                            drawRect(xCoord, startY, 170, 780-startY, fill=rgb(r, g, b))
+                            drawLabel(splitTask.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
+                            if startTime.time().hour > 11:
+                                startValue = 'pm'
+                            else:
+                                startValue = 'am'
+                            if startTime.time().minute == 0:
+                                startMinute = '00'
+                            elif startTime.time().minute < 10:
+                                startMinute = '0' + str(startTime.time().minute)
+                            else:
+                                startMinute = str(startTime.time().minute)
+                            if endTime.time().hour > 11:
+                                endValue = 'pm'
+                            else:
+                                endValue = 'am'
+                            if endTime.time().minute == 0:
+                                endMinute = '00'
+                            else:
+                                endMinute = '0' + str(endTime.time().minute)
+                            if startTime.time().hour == 12:
+                                startHour = '12'
+                            else:
+                                startHour = str((startTime.time().hour)%12)
+                            if endTime.time().hour == 12:
+                                endHour = '12'
+                            else:
+                                endHour = str((endTime.time().hour)%12)
+                            labelValue = startHour + ':' + startMinute + startValue + ' to ' + endHour + ':' + endMinute + endValue
+                            drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
+                    elif startY == 0 and endY != 0 and endY != 156:
+                        if endY-156 < 30:
+                            if endY-156 < 15:
+                                drawRect(xCoord, 156, 170, 15, fill=rgb(r, g, b))
+                            else:
+                                drawRect(xCoord, 156, 170, endY-156, fill=rgb(r, g, b))
+                            drawLabel(splitTask.name, xCoord+5, startY+7.5, align='left', fill='white', font='DM Sans')
+                            if startTime.time().hour > 11:
+                                value = 'pm'
+                            else:
+                                value = 'am'
+                            if startTime.time().minute == 0:
+                                minute = '00'
+                            elif startTime.time().minute < 10:
+                                minute = '0' + str(startTime.time().minute)
+                            else:
+                                minute = str(startTime.time().minute)
+                            if startTime.time().hour == 12:
+                                hour = '12'
+                            else:
+                                hour = str((startTime.time().hour)%12)
+                            drawLabel(hour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
+                        else:
+                            drawRect(xCoord, 156, 170, endY-156, fill=rgb(r, g, b))
+                            drawLabel(splitTask.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
+                            if startTime.time().hour > 11:
+                                startValue = 'pm'
+                            else:
+                                startValue = 'am'
+                            if startTime.time().minute == 0:
+                                startMinute = '00'
+                            else:
+                                startMinute = str(startTime.time().minute)
+                            if endTime.time().hour > 11:
+                                endValue = 'pm'
+                            else:
+                                endValue = 'am'
+                            if endTime.time().minute == 0:
+                                endMinute = '00'
+                            elif endTime.time().minute < 10:
+                                endMinute = '0' + str(endTime.time().minute)
+                            else:
+                                endMinute = str(endTime.time().minute)
+                            if startTime.time().hour == 12:
+                                startHour = '12'
+                            else:
+                                startHour = str((startTime.time().hour)%12)
+                            if endTime.time().hour == 12:
+                                endHour = '12'
+                            else:
+                                endHour = str((endTime.time().hour)%12)
+                            labelValue = startHour + ':' + startMinute + startValue + ' to ' + endHour + ':' + endMinute + endValue
+                            drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
+                    elif startY != 0 and endY != 0:
+                        if endY-startY < 30:
+                            if endY-startY < 15:
+                                drawRect(xCoord, startY, 170, 15, fill=rgb(r, g, b))
+                            else:
+                                drawRect(xCoord, startY, 170, endY-startY, fill=rgb(r, g, b))
+                            drawLabel(splitTask.name, xCoord+5, startY+7.5, align='left', fill='white', font='DM Sans')
+                            if startTime.time().hour > 11:
+                                value = 'pm'
+                            else:
+                                value = 'am'
+                            if startTime.time().minute == 0:
+                                minute = '00'
+                            elif startTime.time().minute < 10:
+                                minute = '0' + str(startTime.time().minute)
+                            else:
+                                minute = str(startTime.time().minute)
+                            if startTime.time().hour == 12:
+                                hour = '12'
+                            else:
+                                hour = str((startTime.time().hour)%12)
+                            drawLabel(hour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
+                        else:
+                            drawRect(xCoord, startY, 170, endY-startY, fill=rgb(r, g, b))
+                            drawLabel(splitTask.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
+                            if startTime.time().hour > 11:
+                                startValue = 'pm'
+                            else:
+                                startValue = 'am'
+                            if startTime.time().minute == 0:
+                                startMinute = '00'
+                            else:
+                                startMinute = str(startTime.time().minute)
+                            if endTime.time().hour > 11:
+                                endValue = 'pm'
+                            else:
+                                endValue = 'am'
+                            if endTime.time().minute == 0:
+                                endMinute = '00'
+                            elif endTime.time().minute < 10:
+                                endMinute = '0' + str(endTime.time().minute)
+                            else:
+                                endMinute = str(endTime.time().minute)
+                            if startTime.time().hour == 12:
+                                startHour = '12'
+                            else:
+                                startHour = str((startTime.time().hour)%12)
+                            if endTime.time().hour == 12:
+                                endHour = '12'
+                            else:
+                                endHour = str((endTime.time().hour)%12)
+                            labelValue = startHour + ':' + startMinute + startValue + ' to ' + endHour + ':' + endMinute + endValue
+                            drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
             elif isinstance(event, Habit) or isinstance(event, SingleEvent):
                 for i in range(len(app.shownTimes)-1):
                     if app.shownTimes[i].time() < event.startTime.time() < app.shownTimes[i+1].time() and startY == 0:
@@ -491,11 +573,172 @@ def drawCalendarEvents(app):
                 g = int(colors[1])
                 b = int(colors[2])
                 if startY != 0 and endY == 0 and startY != 780:
-                    drawRect(xCoord, startY, 170, 780-startY, fill=rgb(r, g, b))
+                    if 780-startY < 30:
+                        if 780-startY < 15:
+                            drawRect(xCoord, startY, 170, 15, fill=rgb(r, g, b))
+                        else:
+                            drawRect(xCoord, startY, 170, 780-startY, fill=rgb(r, g, b))
+                        drawLabel(event.name, xCoord+5, startY+7.5, align='left', fill='white', font='DM Sans')
+                        if event.startTime.time().hour > 11:
+                            value = 'pm'
+                        else:
+                            value = 'am'
+                        if event.startTime.time().minute == 0:
+                            minute = '00'
+                        elif event.startTime.time().minute < 10:
+                            minute = '0' + str(event.startTime.time().minute)
+                        else:
+                            minute = str(event.startTime.time().minute)
+                        if event.startTime.time().hour == 12:
+                            hour = '12'
+                        else:
+                            hour = str((event.startTime.time().hour)%12)
+                        drawLabel(hour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
+                    else:
+                        drawRect(xCoord, startY, 170, 780-startY, fill=rgb(r, g, b))
+                        drawLabel(event.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
+                        if event.startTime.time().hour > 11:
+                            startValue = 'pm'
+                        else:
+                            startValue = 'am'
+                        if event.startTime.time().minute == 0:
+                            startMinute = '00'
+                        elif event.startTime.time().minute < 10:
+                            startMinute = '0' + str(event.startTime.time().minute)
+                        else:
+                            startMinute = str(event.startTime.time().minute)
+                        if event.endTime.time().hour > 11:
+                            endValue = 'pm'
+                        else:
+                            endValue = 'am'
+                        if event.endTime.time().minute == 0:
+                            endMinute = '00'
+                        elif event.endTime.time().minute < 10:
+                            endMinute = '0' + str(event.endTime.time().minute)
+                        else:
+                            endMinute = str(event.endTime.time().minute)
+                        if event.startTime.time().hour == 12:
+                            startHour = '12'
+                        else:
+                            startHour = str((event.startTime.time().hour)%12)
+                        if event.endTime.time().hour == 12:
+                            endHour = '12'
+                        else:
+                            endHour = str((event.endTime.time().hour)%12)
+                        labelValue = startHour + ':' + startMinute + startValue + ' to ' + endHour + ':' + endMinute + endValue
+                        drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
                 elif startY == 0 and endY != 0 and endY != 156:
-                    drawRect(xCoord, 156, 170, endY-156, fill=rgb(r, g, b))
+                    if endY-156 < 30:
+                        if endY-156 < 15:
+                            drawRect(xCoord, 156, 170, 15, fill=rgb(r, g, b))
+                        else:
+                            drawRect(xCoord, 156, 170, endY-156, fill=rgb(r, g, b))
+                        drawLabel(event.name, xCoord+5, startY+7.5, align='left', fill='white', font='DM Sans')
+                        if event.startTime.time().hour > 11:
+                            value = 'pm'
+                        else:
+                            value = 'am'
+                        if event.startTime.time().minute == 0:
+                            minute = '00'
+                        elif event.startTime.time().minute < 10:
+                            minute = '0' + str(event.startTime.time().minute)
+                        else:
+                            minute = str(event.startTime.time().minute)
+                        if event.startTime.time().hour == 12:
+                            hour = '12'
+                        else:
+                            hour = str((event.startTime.time().hour)%12)
+                        drawLabel(hour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
+                    else:
+                        drawRect(xCoord, 156, 170, endY-156, fill=rgb(r, g, b))
+                        if startY+12 > 156:
+                            drawLabel(event.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
+                        if event.startTime.time().hour > 11:
+                            startValue = 'pm'
+                        else:
+                            startValue = 'am'
+                        if event.startTime.time().minute == 0:
+                            startMinute = '00'
+                        elif event.startTime.time().minute < 10:
+                            startMinute = '0' + str(event.startTime.time().minute)
+                        else:
+                            startMinute = str(event.startTime.time().minute)
+                        if event.endTime.time().hour > 11:
+                            endValue = 'pm'
+                        else:
+                            endValue = 'am'
+                        if event.endTime.time().minute == 0:
+                            endMinute = '00'
+                        elif event.endTime.time().minute < 10:
+                            endMinute = '0' + str(event.endTime.time().minute)
+                        else:
+                            endMinute = str(event.endTime.time().minute)
+                        if event.startTime.time().hour == 12:
+                            startHour = '12'
+                        else:
+                            startHour = str((event.startTime.time().hour)%12)
+                        if event.endTime.time().hour == 12:
+                            endHour = '12'
+                        else:
+                            endHour = str((event.endTime.time().hour)%12)
+                        labelValue = startHour + ':' + startMinute + startValue + ' to ' + endHour + ':' + endMinute + endValue
+                        if startY+30 > 156:
+                            drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
                 elif startY != 0 and endY != 0:
-                    drawRect(xCoord, startY, 170, endY-startY, fill=rgb(r, g, b))
+                    if endY-startY < 30:
+                        if endY-startY < 15:
+                            drawRect(xCoord, startY, 170, 15, fill=rgb(r, g, b))
+                        else:
+                            drawRect(xCoord, startY, 170, endY-startY, fill=rgb(r, g, b))
+                        drawLabel(event.name, xCoord+5, startY+7.5, align='left', fill='white', font='DM Sans')
+                        if event.startTime.time().hour > 11:
+                            value = 'pm'
+                        else:
+                            value = 'am'
+                        if event.startTime.time().minute == 0:
+                            minute = '00'
+                        elif event.startTime.time().minute < 10:
+                            minute = '0' + str(event.startTime.time().minute)
+                        else:
+                            minute = str(event.startTime.time().minute)
+                        if event.startTime.time().hour == 12:
+                            startHour = '12'
+                        else:
+                            startHour = str((event.startTime.time().hour)%12)
+                        drawLabel(startHour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
+                    else:
+                        drawRect(xCoord, startY, 170, endY-startY, fill=rgb(r, g, b))
+                        drawLabel(event.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
+                        if event.startTime.time().hour > 11:
+                            startValue = 'pm'
+                        else:
+                            startValue = 'am'
+                        if event.startTime.time().minute == 0:
+                            startMinute = '00'
+                        elif event.startTime.time().minute < 10:
+                            startMinute = '0' + str(event.startTime.time().minute)
+                        else:
+                            startMinute = str(event.startTime.time().minute)
+                        if event.endTime.time().hour > 11:
+                            endValue = 'pm'
+                        else:
+                            endValue = 'am'
+                        if event.endTime.time().minute == 0:
+                            endMinute = '00'
+                        elif event.endTime.time().minute < 10:
+                            endMinute = '0' + str(event.endTime.time().minute)
+                        else:
+                            endMinute = str(event.endTime.time().minute)
+                        if event.startTime.time().hour == 12:
+                            startHour = '12'
+                        else:
+                            startHour = str((event.startTime.time().hour)%12)
+                        if event.endTime.time().hour == 12:
+                            endHour = '12'
+                        else:
+                            endHour = str((event.endTime.time().hour)%12)
+                        labelValue = startHour + ':' + startMinute + startValue + ' to ' + endHour + ':' + endMinute + endValue
+                        drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
         xCoord += 170
 
 def findSplitTask(app, event):
@@ -505,7 +748,9 @@ def findSplitTask(app, event):
 
 def generateWorkSessions(app):
     for events in app.splitTasks:
-        app.splitTaskWorkSessions[events] = findAvailableDays(app, [], events.date - timedelta(days=1), getDurationEachDay(events.durationHours*60 + events.durationMinutes, events.daysTillDue))
+        availableDays = findAvailableDays(app, [], events.date - timedelta(days=1), getDurationEachDay(events.durationHours*60 + events.durationMinutes, events.daysTillDue))
+        if availableDays != None:
+            app.splitTaskWorkSessions[events] = availableDays
 
 def getDurationEachDay(duration, days):
     durationsList = []
@@ -519,7 +764,7 @@ def findAvailableDays(app, currSolution, currDay, durationEachDay):
     if durationEachDay == []:
         return currSolution
     else:
-        for startTime in getFormattedTimes(app, currDay):
+        for startTime in getFormattedTimes(currDay):
             if canAdd(app, startTime, durationEachDay[-1], currDay):
                 temp = durationEachDay.pop()
                 currDay -= timedelta(days=1)
@@ -540,7 +785,17 @@ def canAdd(app, startTime, duration, currDay):
                 return False
             elif event.startTime.time() <= startTime.time() <= event.endTime.time():
                 return False
-            elif (startTime - timedelta(minutes=10)).time() <= event.endTime.time():
+            elif event.startTime.time() <= (startTime - timedelta(minutes=10)).time() <= event.endTime.time():
+                return False
+        elif isinstance(event, tuple):
+            (splitStartTime, splitEndTime) = event
+            if startTime.time() == splitStartTime.time() and (startTime+timedelta(hours=duration//60, minutes=duration%60)).time() == splitEndTime.time():
+                return True
+            elif splitStartTime.time() <= (startTime+timedelta(hours=duration//60, minutes=duration%60)).time() <= splitEndTime.time():
+                return False
+            elif splitStartTime.time() <= startTime.time() <= splitEndTime.time():
+                return False
+            elif splitStartTime.time() <= (startTime - timedelta(minutes=10)).time() <= splitEndTime.time():
                 return False
     return True       
     

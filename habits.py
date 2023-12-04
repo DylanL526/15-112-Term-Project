@@ -10,8 +10,9 @@ def drawHabits(app):
     drawImage(CMUImage(button), 1224, 13, height=52, width=128)
     drawLabel('New Habit', 1298, 39, size=19, align='center', font='DM Sans 36pt')
     drawLabel('+', 1243, 41, size=28, font='DM Sans 36pt')
+    drawHabitsWidgets(app)
 
-def drawHabitsPopUp(habitName, startTime, endTime, selectedDays, rect3Fill, rect4Fill):
+def drawHabitsPopUp(habitName, startTime, endTime, rect1Fill, rect2Fill):
     popUpMenu = Image.open('Images/popupmenu.png') # Image is shape from https://docs.google.com/presentation/u/1/
     drawImage(CMUImage(popUpMenu), 789, 13, width=422, height=385)
     drawLine(793, 78, 1207, 78, fill=rgb(217, 217, 217))
@@ -22,13 +23,40 @@ def drawHabitsPopUp(habitName, startTime, endTime, selectedDays, rect3Fill, rect
     drawImage(CMUImage(button), 1095, 344, height=40, width=98)
     drawLabel('Add', 1144, 364, size=17, font='DM Sans')
     drawLabel('Duration', 810, 105, align='left', size=25, font='DM Sans', fill=rgb(167, 173, 173))
-    drawRect(806, 121, 130, 40, fill=rect3Fill)
+    drawRect(806, 121, 130, 40, fill=rect1Fill)
     drawLabel(startTime, 870, 142, size=30, font='DM Sans')
     drawLabel('to', 955, 143, size=30, fill=rgb(167, 173, 173), font='DM Sans')
-    drawRect(975, 121, 130, 40, fill=rect4Fill)
+    drawRect(975, 121, 130, 40, fill=rect2Fill)
     drawLabel(endTime, 1040, 142, size=30, font='DM Sans')
     drawLabel('Days', 810, 189, align='left', size=25, font='DM Sans', fill=rgb(167, 173, 173))
     drawDateButtons(app.habitsDayButtonList)
+
+def drawHabitsWidgets(app):
+    yValue = 98
+    habitsList = list(app.habitsSet)
+    for habits in habitsList[0+app.habitsIndex:app.habitsIndex+7]:
+        drawRect(98, yValue, 1248, 78, fill='white', border=rgb(167, 173, 173), borderWidth=1)
+        drawLabel(habits.name, 112, yValue+24, font='DM Sans', align='left', size=30)
+        dayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+        if isinstance(habits.days, str):
+            habitDays = habits.days
+            habitDays = habitDays.replace("'", '')
+            habitDays = habitDays.replace('{', '')
+            habitDays = habitDays.replace('}', '')
+            habitDays = habitDays.replace(' ', '')
+            daysList = habitDays.split(',')
+            daysList = sorted(daysList, key=dayOrder.index) # Code from https://dev.to/abdulla783/sort-weekdays-in-python-example-wed-tues-sat-sun-fri-thurs-mon-5b3o
+        else:
+            habitDays = list(habits.days)
+            daysList = sorted(habitDays, key=dayOrder.index) # # Code from https://dev.to/abdulla783/sort-weekdays-in-python-example-wed-tues-sat-sun-fri-thurs-mon-5b3o
+        dayString = ''
+        for days in daysList:
+            dayString += days
+            dayString += ','
+            dayString += ' '
+        drawLabel(dayString[:-2], 112, yValue+57, font='DM Sans 36pt', align='left', size=20, fill=rgb(167, 173, 173))
+        drawLabel(str(habits.startTime.strftime("%-I:%M")) + (str(habits.startTime.strftime("%p"))).lower() + ' to ' + str(habits.endTime.strftime("%-I:%M")) + (str(habits.endTime.strftime("%p"))).lower(), 1335, yValue+57, align='right', size=20, fill=rgb(167, 173, 173), font='DM Sans 36pt')
+        yValue += 98
 
 def drawDateButtons(buttonList):
     for buttons in buttonList:
@@ -42,16 +70,6 @@ def drawDateButtons(buttonList):
         else:
             label = str(buttons.value.month) + '/' + str(buttons.value.day)
             drawLabel(label, buttons.x+45, buttons.y+25, fill='white', size=15, font='DM Sans')
-
-def checkHabitStartEndTimePresses(app, mouseX, mouseY):
-    if 806 <= mouseX <= 936 and 121 <= mouseY <= 161:
-        app.rect3TextField = True
-    else:
-        app.rect3TextField = False
-    if 975 <= mouseX <= 1105 and 121 <= mouseY <= 161:
-        app.rect4TextField = True
-    else:
-        app.rect4TextField = False
 
 def isLegalHabitTime(app):
     startTime = app.habitStartTime.replace('|', '')
@@ -69,4 +87,4 @@ class Habit:
         self.days = days
         self.startTime = startTime
         self.endTime = endTime
-        self.fill = "30, 33, 54" # Color sourced from https://i.pinimg.com/736x/af/34/ec/af34ec62e403206b0c9fce24051f9160.jpg
+        self.fill = "61, 66, 107" # Color sourced from https://www.color-name.com/color-image?c=3D426B&desktop
