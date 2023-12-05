@@ -1,3 +1,4 @@
+![Hourglass Logo](https://imgur.com/a/7IYriGH)
 ***************************
 Hourglass
 15-112 Fall 2023 Term Project
