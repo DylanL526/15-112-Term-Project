@@ -2,6 +2,7 @@ from datetime import date, timedelta, datetime
 from cmu_graphics import*
 from PIL import Image
 from calendarScreen import*
+import csv
 
 def drawHabits(app):
     drawLabel('Habits', 98, 39, size=35, align='left', font='DM Sans 36pt')
@@ -48,7 +49,7 @@ def drawHabitsWidgets(app):
             daysList = sorted(daysList, key=dayOrder.index) # Code from https://dev.to/abdulla783/sort-weekdays-in-python-example-wed-tues-sat-sun-fri-thurs-mon-5b3o
         else:
             habitDays = list(habits.days)
-            daysList = sorted(habitDays, key=dayOrder.index) # # Code from https://dev.to/abdulla783/sort-weekdays-in-python-example-wed-tues-sat-sun-fri-thurs-mon-5b3o
+            daysList = sorted(habitDays, key=dayOrder.index) # Code from https://dev.to/abdulla783/sort-weekdays-in-python-example-wed-tues-sat-sun-fri-thurs-mon-5b3o
         dayString = ''
         for days in daysList:
             dayString += days
@@ -56,7 +57,35 @@ def drawHabitsWidgets(app):
             dayString += ' '
         drawLabel(dayString[:-2], 112, yValue+57, font='DM Sans 36pt', align='left', size=20, fill=rgb(167, 173, 173))
         drawLabel(str(habits.startTime.strftime("%-I:%M")) + (str(habits.startTime.strftime("%p"))).lower() + ' to ' + str(habits.endTime.strftime("%-I:%M")) + (str(habits.endTime.strftime("%p"))).lower(), 1335, yValue+57, align='right', size=20, fill=rgb(167, 173, 173), font='DM Sans 36pt')
+        trash = Image.open('Images/bin.png') # Icon from https://www.flaticon.com/free-icon/bin_484662?term=trash+can&page=1&position=1&origin=tag&related_id=484662
+        drawImage(CMUImage(trash), 1315, yValue+12, height=20, width=20)
+        app.habitWidgetCoords[habits] = (1315, yValue+12)
         yValue += 98
+
+def checkForHabitTrashPress(app, mouseX, mouseY):
+    for habits in app.habitWidgetCoords:
+        (xCoord, yCoord) = app.habitWidgetCoords[habits]
+        if xCoord <= mouseX <= xCoord+20 and yCoord <= mouseY <= yCoord+20:
+            app.habitsSet.remove(habits)
+            app.habitWidgetCoords = dict()
+            removeHabitData(habits)
+            break
+
+### Code from https://stackoverflow.com/questions/56987312/how-to-delete-only-one-row-from-a-csv-file-with-python ###
+
+def removeHabitData(habit):
+    lines = []
+    with open('habitData.csv', 'r') as readFile:
+        reader = csv.reader(readFile)
+        for row in reader:
+            lines.append(row)
+            if row[0] == habit.name:
+                lines.remove(row)
+    with open('habitData.csv', 'w') as writeFile:
+        writer = csv.writer(writeFile)
+        writer.writerows(lines)
+
+#####################################################################################################################
 
 def drawDateButtons(buttonList):
     for buttons in buttonList:

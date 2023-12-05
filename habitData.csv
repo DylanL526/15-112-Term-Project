@@ -1,10 +1,15 @@
-name, days, startTime, endTime
-15-112 Lecture,"{'Thursday', 'Tuesday'}",1900-01-01 09:30:00,1900-01-01 10:50:00
-21-108 Lecture,"{'Monday', 'Friday', 'Wednesday'}",1900-01-01 15:00:00,1900-01-01 15:50:00
-FYC,"{'Monday', 'Wednesday'}",1900-01-01 16:00:00,1900-01-01 16:50:00
+name,days,startTime,endTime
+112 Lecture,"{'Thursday', 'Tuesday'}",1900-01-01 09:30:00,1900-01-01 10:50:00
+70-100,"{'Thursday', 'Tuesday'}",1900-01-01 11:00:00,1900-01-01 12:20:00
+112 Recitation,"{'Wednesday', 'Friday'}",1900-01-01 10:00:00,1900-01-01 10:50:00
+108 Lecture,"{'Wednesday', 'Friday', 'Monday'}",1900-01-01 13:00:00,1900-01-01 13:50:00
+120 Lecture,"{'Wednesday', 'Friday', 'Monday'}",1900-01-01 15:00:00,1900-01-01 15:50:00
+FIC,"{'Wednesday', 'Monday'}",1900-01-01 16:00:00,1900-01-01 16:50:00
+108 Recitation,"{'Thursday', 'Tuesday'}",1900-01-01 14:00:00,1900-01-01 14:50:00
 GPI,{'Friday'},1900-01-01 16:00:00,1900-01-01 16:50:00
-112 Recitation,"{'Monday', 'Wednesday', 'Friday'}",1900-01-01 10:00:00,1900-01-01 10:50:00
-108 Recitation,"{'Tuesday', 'Thursday'}",1900-01-01 14:00:00,1900-01-01 14:50:00
-70-100,"{'Tuesday', 'Thursday'}",1900-01-01 11:00:00,1900-01-01 12:20:00
-Breakfast,"{'Monday', 'Thursday', 'Wednesday', 'Friday', 'Tuesday'}",1900-01-01 07:00:00,1900-01-01 08:00:00
-Recitation,"{'Tuesday', 'Thursday'}",1900-01-01 08:15:00,1900-01-01 08:45:00
+108 Recitation,"{'Thursday', 'Tuesday'}",1900-01-01 08:00:00,1900-01-01 08:50:00
+Breakfast,"{'Tuesday', 'Saturday', 'Monday', 'Sunday', 'Wednesday', 'Friday', 'Thursday'}",1900-01-01 07:00:00,1900-01-01 07:50:00
+Lunch,"{'Monday', 'Wednesday', 'Friday'}",1900-01-01 11:30:00,1900-01-01 12:00:00
+Lunch,{'Sunday'},1900-01-01 12:00:00,1900-01-01 13:00:00
+Lunch,{'Saturday'},1900-01-01 13:15:00,1900-01-01 14:15:00
+Dinner,"{'Sunday', 'Monday', 'Friday', 'Thursday', 'Saturday', 'Wednesday', 'Tuesday'}",1900-01-01 17:00:00,1900-01-01 18:00:00

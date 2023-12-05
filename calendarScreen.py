@@ -1,7 +1,8 @@
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta, datetime, time
 from cmu_graphics import*
 from PIL import Image
 from habits import*
+import copy
 
 def drawCalendar(app, currentDate, dateList):
     drawLabel(getCurrentMonth(dateList[0].month) + " " + str(dateList[0].year), 98, 39, size=35, align='left', font='DM Sans 36pt')
@@ -413,7 +414,6 @@ def drawCalendarEvents(app):
                             drawLabel(hour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
                         else:
                             drawRect(xCoord, startY, 170, 780-startY, fill=rgb(r, g, b))
-                            drawLabel(splitTask.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
                             if startTime.time().hour > 11:
                                 startValue = 'pm'
                             else:
@@ -430,8 +430,10 @@ def drawCalendarEvents(app):
                                 endValue = 'am'
                             if endTime.time().minute == 0:
                                 endMinute = '00'
-                            else:
+                            elif endTime.time().minute < 10:
                                 endMinute = '0' + str(endTime.time().minute)
+                            else:
+                                endMinute = str(endTime.time().minute)
                             if startTime.time().hour == 12:
                                 startHour = '12'
                             else:
@@ -441,14 +443,15 @@ def drawCalendarEvents(app):
                             else:
                                 endHour = str((endTime.time().hour)%12)
                             labelValue = startHour + ':' + startMinute + startValue + ' to ' + endHour + ':' + endMinute + endValue
-                            drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
+                            if startY+12 > 156:
+                                drawLabel(splitTask.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
+                                drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
                     elif startY == 0 and endY != 0 and endY != 156:
                         if endY-156 < 30:
                             if endY-156 < 15:
                                 drawRect(xCoord, 156, 170, 15, fill=rgb(r, g, b))
                             else:
                                 drawRect(xCoord, 156, 170, endY-156, fill=rgb(r, g, b))
-                            drawLabel(splitTask.name, xCoord+5, startY+7.5, align='left', fill='white', font='DM Sans')
                             if startTime.time().hour > 11:
                                 value = 'pm'
                             else:
@@ -463,10 +466,11 @@ def drawCalendarEvents(app):
                                 hour = '12'
                             else:
                                 hour = str((startTime.time().hour)%12)
-                            drawLabel(hour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
+                            if startY+7.5 > 156:
+                                drawLabel(splitTask.name, xCoord+5, startY+7.5, align='left', fill='white', font='DM Sans')
+                                drawLabel(hour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
                         else:
                             drawRect(xCoord, 156, 170, endY-156, fill=rgb(r, g, b))
-                            drawLabel(splitTask.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
                             if startTime.time().hour > 11:
                                 startValue = 'pm'
                             else:
@@ -494,14 +498,15 @@ def drawCalendarEvents(app):
                             else:
                                 endHour = str((endTime.time().hour)%12)
                             labelValue = startHour + ':' + startMinute + startValue + ' to ' + endHour + ':' + endMinute + endValue
-                            drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
+                            if startY+12 > 156:
+                                drawLabel(splitTask.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
+                                drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
                     elif startY != 0 and endY != 0:
                         if endY-startY < 30:
                             if endY-startY < 15:
                                 drawRect(xCoord, startY, 170, 15, fill=rgb(r, g, b))
                             else:
                                 drawRect(xCoord, startY, 170, endY-startY, fill=rgb(r, g, b))
-                            drawLabel(splitTask.name, xCoord+5, startY+7.5, align='left', fill='white', font='DM Sans')
                             if startTime.time().hour > 11:
                                 value = 'pm'
                             else:
@@ -516,10 +521,11 @@ def drawCalendarEvents(app):
                                 hour = '12'
                             else:
                                 hour = str((startTime.time().hour)%12)
-                            drawLabel(hour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
+                            if startY+7.5 > 156:
+                                drawLabel(splitTask.name, xCoord+5, startY+7.5, align='left', fill='white', font='DM Sans')
+                                drawLabel(hour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
                         else:
                             drawRect(xCoord, startY, 170, endY-startY, fill=rgb(r, g, b))
-                            drawLabel(splitTask.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
                             if startTime.time().hour > 11:
                                 startValue = 'pm'
                             else:
@@ -547,7 +553,9 @@ def drawCalendarEvents(app):
                             else:
                                 endHour = str((endTime.time().hour)%12)
                             labelValue = startHour + ':' + startMinute + startValue + ' to ' + endHour + ':' + endMinute + endValue
-                            drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
+                            if startY+12 > 156:
+                                drawLabel(splitTask.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
+                                drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
             elif isinstance(event, Habit) or isinstance(event, SingleEvent):
                 for i in range(len(app.shownTimes)-1):
                     if app.shownTimes[i].time() < event.startTime.time() < app.shownTimes[i+1].time() and startY == 0:
@@ -593,10 +601,11 @@ def drawCalendarEvents(app):
                             hour = '12'
                         else:
                             hour = str((event.startTime.time().hour)%12)
-                        drawLabel(hour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
+                        if startY+7.5 > 156:
+                            drawLabel(event.name, xCoord+5, startY+7.5, align='left', fill='white', font='DM Sans')
+                            drawLabel(hour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
                     else:
                         drawRect(xCoord, startY, 170, 780-startY, fill=rgb(r, g, b))
-                        drawLabel(event.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
                         if event.startTime.time().hour > 11:
                             startValue = 'pm'
                         else:
@@ -626,14 +635,15 @@ def drawCalendarEvents(app):
                         else:
                             endHour = str((event.endTime.time().hour)%12)
                         labelValue = startHour + ':' + startMinute + startValue + ' to ' + endHour + ':' + endMinute + endValue
-                        drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
+                        if startY+12 > 165:
+                            drawLabel(event.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
+                            drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
                 elif startY == 0 and endY != 0 and endY != 156:
                     if endY-156 < 30:
                         if endY-156 < 15:
                             drawRect(xCoord, 156, 170, 15, fill=rgb(r, g, b))
                         else:
                             drawRect(xCoord, 156, 170, endY-156, fill=rgb(r, g, b))
-                        drawLabel(event.name, xCoord+5, startY+7.5, align='left', fill='white', font='DM Sans')
                         if event.startTime.time().hour > 11:
                             value = 'pm'
                         else:
@@ -648,11 +658,11 @@ def drawCalendarEvents(app):
                             hour = '12'
                         else:
                             hour = str((event.startTime.time().hour)%12)
-                        drawLabel(hour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
+                        if startY+7.5 > 156:
+                            drawLabel(event.name, xCoord+5, startY+7.5, align='left', fill='white', font='DM Sans')
+                            drawLabel(hour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
                     else:
                         drawRect(xCoord, 156, 170, endY-156, fill=rgb(r, g, b))
-                        if startY+12 > 156:
-                            drawLabel(event.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
                         if event.startTime.time().hour > 11:
                             startValue = 'pm'
                         else:
@@ -682,7 +692,8 @@ def drawCalendarEvents(app):
                         else:
                             endHour = str((event.endTime.time().hour)%12)
                         labelValue = startHour + ':' + startMinute + startValue + ' to ' + endHour + ':' + endMinute + endValue
-                        if startY+30 > 156:
+                        if startY+12 > 156:
+                            drawLabel(event.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
                             drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
                 elif startY != 0 and endY != 0:
                     if endY-startY < 30:
@@ -690,7 +701,6 @@ def drawCalendarEvents(app):
                             drawRect(xCoord, startY, 170, 15, fill=rgb(r, g, b))
                         else:
                             drawRect(xCoord, startY, 170, endY-startY, fill=rgb(r, g, b))
-                        drawLabel(event.name, xCoord+5, startY+7.5, align='left', fill='white', font='DM Sans')
                         if event.startTime.time().hour > 11:
                             value = 'pm'
                         else:
@@ -705,10 +715,11 @@ def drawCalendarEvents(app):
                             startHour = '12'
                         else:
                             startHour = str((event.startTime.time().hour)%12)
-                        drawLabel(startHour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
+                        if startY+7.5 > 156:
+                            drawLabel(event.name, xCoord+5, startY+7.5, align='left', fill='white', font='DM Sans')
+                            drawLabel(startHour + ':' + minute + value, xCoord+167, startY+7.5, align='right', fill='white', font='DM Sans 36pt')
                     else:
                         drawRect(xCoord, startY, 170, endY-startY, fill=rgb(r, g, b))
-                        drawLabel(event.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
                         if event.startTime.time().hour > 11:
                             startValue = 'pm'
                         else:
@@ -738,7 +749,9 @@ def drawCalendarEvents(app):
                         else:
                             endHour = str((event.endTime.time().hour)%12)
                         labelValue = startHour + ':' + startMinute + startValue + ' to ' + endHour + ':' + endMinute + endValue
-                        drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
+                        if startY+12 > 156:
+                            drawLabel(event.name, xCoord+5, startY+12, align='left', fill='white', font='DM Sans', size=20)
+                            drawLabel(labelValue, xCoord+5, startY+30, align='left', fill='white', font='DM Sans 36pt')
         xCoord += 170
 
 def findSplitTask(app, event):
@@ -747,7 +760,8 @@ def findSplitTask(app, event):
             return keys
 
 def generateWorkSessions(app):
-    for events in app.splitTasks:
+    iterationTasks = copy.copy(app.splitTasks)
+    for events in iterationTasks:
         availableDays = findAvailableDays(app, [], events.date - timedelta(days=1), getDurationEachDay(events.durationHours*60 + events.durationMinutes, events.daysTillDue))
         if availableDays != None:
             app.splitTaskWorkSessions[events] = availableDays
@@ -787,6 +801,12 @@ def canAdd(app, startTime, duration, currDay):
                 return False
             elif event.startTime.time() <= (startTime - timedelta(minutes=10)).time() <= event.endTime.time():
                 return False
+            elif startTime.time() <= event.startTime.time() <= (startTime+timedelta(hours=duration//60, minutes=duration%60)).time():
+                return False
+            elif startTime.time() <= event.endTime.time() <= (startTime+timedelta(hours=duration//60, minutes=duration%60)).time():
+                return False
+            elif (startTime+timedelta(hours=duration//60, minutes=duration%60)).date() > currDay:
+                return False
         elif isinstance(event, tuple):
             (splitStartTime, splitEndTime) = event
             if startTime.time() == splitStartTime.time() and (startTime+timedelta(hours=duration//60, minutes=duration%60)).time() == splitEndTime.time():
@@ -796,6 +816,12 @@ def canAdd(app, startTime, duration, currDay):
             elif splitStartTime.time() <= startTime.time() <= splitEndTime.time():
                 return False
             elif splitStartTime.time() <= (startTime - timedelta(minutes=10)).time() <= splitEndTime.time():
+                return False
+            elif startTime.time() <= splitStartTime.time() <= (startTime+timedelta(hours=duration//60, minutes=duration%60)).time():
+                return False
+            elif startTime.time() <= splitEndTime.time() <= (startTime+timedelta(hours=duration//60, minutes=duration%60)).time():
+                return False
+            elif (startTime+timedelta(hours=duration//60, minutes=duration%60)).date() > currDay:
                 return False
     return True       
     
